@@ -1,0 +1,11 @@
+# everything
+*
+
+# except: files
+!.gitignore
+!*.md
+!*.png
+!AUTHORS
+
+# except: directories
+!img

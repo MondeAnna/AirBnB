@@ -6,7 +6,8 @@ all common attributes and methods for the project's classes
 
 
 from datetime import datetime
-from uuid import uuid4
+from datetime import date
+import uuid
 
 
 class BaseModel:
@@ -54,6 +55,21 @@ class BaseModel:
 
         self.__updated_at = datetime.now()
 
+    def to_dict(self):
+        """Returns serialised method/attr-to-value pair for current model"""
+
+        class_name = self.__class__.__name__
+        prefix = f"_{class_name}__"
+
+        dict_ = {
+            key.replace(prefix, ""): (
+                value.isoformat() if isinstance(value, date) else value
+            )
+            for key, value in self.__dict__.items()
+        }
+
+        return {"__class__": class_name, **dict_}
+
     @property
     def updated_at(self):
         """
@@ -66,7 +82,7 @@ class BaseModel:
     def __init_default__(self):
         """Generates a new BaseModel object"""
 
-        self.__id = str(uuid4())
+        self.__id = str(uuid.uuid4())
         self.__created_at = self.__updated_at = datetime.now()
 
     def __init_kwargs__(self, kwargs):

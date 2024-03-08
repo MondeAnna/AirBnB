@@ -136,3 +136,16 @@ class BaseModel:
 
         self.__updated_at = datetime.now()
         super().__setattr__(name, value)
+
+    def __str__(self):
+        """Returns a string representing the current model"""
+
+        class_name = self.__class__.__name__
+        prefix = f"_{class_name}__"
+
+        dict_ = {
+            key.replace(prefix, ""): value
+            for key, value in sorted(self.__dict__.items())
+        }
+
+        return f"[{class_name}] ({self.id}) {dict_}"

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 """CLI Backend Console"""
+from collections import OrderedDict
 import cmd
 
 
@@ -122,15 +123,15 @@ class Console(cmd.Cmd):
             ** no instance found **
         """
 
-        model_name, instance_id = self.__split_line__(line)
+        parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(model_name):
+        if not self.__is_valid_model__(parsed["model_name"]):
             return
 
-        if not self.__is_valid_id__(instance_id):
+        if not self.__is_valid_id__(parsed["instance_id"]):
             return
 
-        key = f"{model_name}.{instance_id}"
+        key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
         storage.all().pop(key)
         storage.save()
 
@@ -193,17 +194,92 @@ class Console(cmd.Cmd):
             ** no instance found **
         """
 
-        model_name, instance_id = self.__split_line__(line)
+        parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(model_name):
+        if not self.__is_valid_model__(parsed["model_name"]):
             return
 
-        if not self.__is_valid_id__(instance_id):
+        if not self.__is_valid_id__(parsed["instance_id"]):
             return
 
-        key = f"{model_name}.{instance_id}"
+        key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
         kwargs = storage.all().get(key)
         print(BaseModel(**kwargs))
+
+    def do_update(self, line):
+        """
+        Updates an instance based on the model name and id
+        by adding or updating attribute, which is then sent
+        to storage. One attribute can be updated at a time,
+        whereby the attribute value is cast into one of
+        three type, float, int or str.
+
+        Of note is that `id`, `created_at` and `updated_at`
+        cannot be updated.
+
+        Usage
+        -----
+            update <model name> <id> <attribute name> "<attribute value>"
+
+        Expected
+        --------
+            (anna) update BaseModel 1234-1234-1234 email "aibnb@mail.com"
+
+        Missing Model Name
+        ------------------
+            (anna) update
+            ** model name missing **
+
+        Non-Existant Model
+        ------------------
+            (anna) update DoesNotExist
+            ** model doesn't exist **
+
+        Missing Instance ID
+        -------------------
+            (anna) update BaseModel
+            ** instance id missing **
+
+        Non-Existant Instance ID
+        ------------------------
+            (anna) update BaseModel 123-456-789
+            ** no instance found **
+
+        Missing Attribute Name
+        ----------------------
+            (anna) update BaseModel 123-456-789
+            ** attribute name missing **
+
+        Non-Existant Attribute Value
+        ----------------------------
+            (anna) update BaseModel 123-456-789 first_name
+            ** value missing **
+        """
+
+        parsed = self.__parse_line__(line)
+
+        if not self.__is_valid_model__(parsed["model_name"]):
+            return
+
+        if not self.__is_valid_id__(parsed["instance_id"]):
+            return
+
+        if not parsed["attribute"]:
+            return print("** attribute name missing **")
+
+        if not parsed["value"]:
+            return print("** value missing **")
+
+        key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
+        kwargs = storage.all().get(key)
+
+        if parsed.get("attribute"):
+            attr = parsed.get("attribute")
+            kwargs[attr] = parsed.get("value")
+
+        Model = self.__MODELS.get(parsed["model_name"])
+        model = Model(**kwargs)
+        storage.save()
 
     def emptyline(self):
         """Skips to new prompt should input be empty"""
@@ -239,8 +315,7 @@ class Console(cmd.Cmd):
 
         return True
 
-    @staticmethod
-    def __split_line__(line):
+    def __parse_line__(self, line):
         """
         Separate line into model name and instance id
 
@@ -257,13 +332,42 @@ class Console(cmd.Cmd):
             the instance id
         """
 
-        model_name = line
-        instance_id = ""
+        parsed = OrderedDict({
+            "model_name": None,
+            "instance_id": None,
+            "attribute": None,
+            "value": None,
+        })
 
-        if line.count(" "):
-            model_name, instance_id, *_ = line.split()
+        split = line.split()
 
-        return model_name, instance_id
+        for key, value in zip(parsed, split):
+            parsed[key] = value
+
+        parsed["value"] = self.__type_value(parsed["value"])
+
+        return parsed
+
+    @staticmethod
+    def __type_value(value):
+        """
+        Set the type of the value, at present limited to
+        `float`, `int` and `str`
+
+        Parameter
+        ---------
+        value : str
+            user provided input
+
+        Return
+        ------
+        float | int | str
+            typed input from user
+        """
+
+        for instance in [float, int, str]:
+            if isinstance(value, instance):
+                return instance(value)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,9 @@ from datetime import date
 import uuid
 
 
+from models import storage
+
+
 class BaseModel:
     """
     Definition, documentation and encapsulation of all common
@@ -31,6 +34,7 @@ class BaseModel:
         """
 
         self.__init_kwargs__(kwargs) if kwargs else self.__init_default__()
+        storage.new(self)
 
     @property
     def id(self):
@@ -54,6 +58,7 @@ class BaseModel:
         """Saves present model to storage"""
 
         self.__updated_at = datetime.now()
+        storage.save()
 
     @property
     def super_id(self):

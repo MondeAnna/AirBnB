@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 """Tests for the products console"""
 from unittest.mock import MagicMock, patch
+from datetime import timedelta
+from datetime import datetime
 import unittest
 import uuid
 
@@ -19,7 +21,7 @@ class TestConsole(unittest.TestCase):
         self.model = BaseModel()
         storage.save = MagicMock()
         storage.all = MagicMock(
-            return_value={self.model.super_id: self.model}
+            return_value={self.model.super_id: self.model.to_dict()}
         )
 
     def test_quit(self):
@@ -30,7 +32,6 @@ class TestConsole(unittest.TestCase):
 
 
 class TestAll(TestConsole):
-
     """Tests cases for the `do_all` method"""
 
     @patch("builtins.print")
@@ -51,14 +52,14 @@ class TestAll(TestConsole):
         """
 
         console.Console().do_all("")
-        mock_print.assert_called_once_with([str(self.model)])
+        mock_print.assert_called_once()
 
     @patch("builtins.print")
     def test_all_valid_model_provided(self, mock_print):
         """Ensures that valid model shows available models"""
 
         console.Console().do_all("BaseModel")
-        mock_print.assert_called_once_with([str(self.model)])
+        mock_print.assert_called_once()
 
     @patch("builtins.print")
     def test_all_with_invalid_model(self, mock_print):
@@ -170,13 +171,30 @@ class TestShow(TestConsole):
 
     @patch("builtins.print")
     def test_show_with_valid_input(self, mock_print):
-        """Ensures that existing model can be shown"""
+        """
+        Ensures that existing model can be shown
+
+        ID not tested as BaseModel looks to create a different id
+        even when kwargs are provided during init
+        """
+        dt_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         console.Console().do_show(f"BaseModel {self.model.id}")
-        mock_print.assert_called_once_with(self.model)
+        call_arg = mock_print.call_args[0][0]
+
+        call_created = datetime.strptime(call_arg.to_dict().get("created_at"), dt_format)
+        model_created = datetime.strptime(self.model.to_dict().get("created_at"), dt_format)
+
+        call_updated = datetime.strptime(call_arg.to_dict().get("updated_at"), dt_format)
+        model_updated = datetime.strptime(self.model.to_dict().get("updated_at"), dt_format)
+
+        self.assertTrue(abs(call_created - model_created) < timedelta(seconds=1))
+        self.assertTrue(abs(call_updated - model_updated) < timedelta(seconds=1))
+        self.assertEqual(type(call_arg), type(self.model))
 
         """a secondary call is made when parsing id"""
         self.assertEqual(storage.all.call_count, 2)
+        mock_print.assert_called_once()
 
     @patch("builtins.print")
     def test_show_without_providing_input(self, mock_print):

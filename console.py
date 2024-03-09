@@ -41,17 +41,15 @@ class Console(cmd.Cmd):
             return print("** model doesn't exist **")
 
         if not model_name:
-            models = list(storage.all().values())
+            list_of_kwargs = list(storage.all().values())
         else:
-            models = [
-                model for model in storage.all().values()
-                if model.to_dict().get("__class__") == model_name
+            list_of_kwargs = [
+                kwargs for kwargs in storage.all().values()
+                if kwargs.get("__class__") == model_name
             ]
 
-        str_models = [str(model) for model in models]
-
-        if str_models:
-            print(str_models)
+        for kwargs in list_of_kwargs:
+            print(BaseModel(**kwargs).super_id)
 
     def do_create(self, model_name):
         """
@@ -202,8 +200,8 @@ class Console(cmd.Cmd):
             return
 
         key = f"{model_name}.{instance_id}"
-        model = storage.all().get(key)
-        print(model)
+        kwargs = storage.all().get(key)
+        print(BaseModel(**kwargs))
 
     def emptyline(self):
         """Skips to new prompt should input be empty"""

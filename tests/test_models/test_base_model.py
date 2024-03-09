@@ -1,8 +1,5 @@
 #!/usr/bin/python3
-"""
-Collective testing of attributes
-related to base model
-"""
+"""Collective testing of attributes related to base model"""
 
 
 from unittest.mock import MagicMock
@@ -10,6 +7,7 @@ from unittest.mock import patch
 from datetime import datetime
 from unittest import TestCase
 from unittest import main
+from unittest import skip
 import uuid
 
 
@@ -18,10 +16,8 @@ from models import storage
 
 
 class TestBaseModel(TestCase):
-    """
-    Collective testing of attributes
-    related to base model
-    """
+
+    """Collective testing of attributes related to base model"""
 
     def setUp(self):
         """Test instance factory"""
@@ -36,18 +32,18 @@ class TestBaseModel(TestCase):
 
 
 class TestIdentification(TestBaseModel):
-    """
-    Collective and specified testing
-    of the `id` model attribute
-    """
+
+    """Collective and specified testing of the `id` model attribute"""
 
     def test_id_is_str(self):
+
         """Instance ID is str type"""
 
         id_ = self.model_00.id
         self.assertIsInstance(id_, str)
 
     def test_id_is_unique(self):
+
         """Instance ID's are unique to each instance"""
 
         id_00 = self.model_00.id
@@ -55,6 +51,7 @@ class TestIdentification(TestBaseModel):
         self.assertNotEqual(id_00, id_01)
 
     def test_id_is_immutable(self):
+
         """Instance ID cannot be unchangeable after instantiation"""
 
         with self.assertRaises(AttributeError) as error:
@@ -66,6 +63,7 @@ class TestIdentification(TestBaseModel):
         self.assertEqual(exception, expect)
 
     def test_super_id(self):
+
         """Instance ID suffixed to model type"""
 
         super_id = self.model_00.super_id
@@ -76,18 +74,21 @@ class TestIdentification(TestBaseModel):
 
 
 class TestCreatedAt(TestBaseModel):
+
     """
-    Collective and specified testing of
-    the `created_at` model attribute
+    Collective and specified testing of the `created_at`
+    model attribute
     """
 
     def test_created_at_is_datetime(self):
+
         """Instance attribute is datetime object"""
 
         created_at = self.model_01.created_at
         self.assertIsInstance(created_at, datetime)
 
     def test_created_at_is_unique_to_instance(self):
+
         """Instance attribute is unique to each instance"""
 
         created_at_00 = self.model_00.created_at
@@ -95,6 +96,7 @@ class TestCreatedAt(TestBaseModel):
         self.assertNotEqual(created_at_00, created_at_01)
 
     def test_created_at_is_immutable(self):
+
         """Instance attribute unchangeable after instantiation"""
 
         with self.assertRaises(AttributeError) as error:
@@ -107,9 +109,10 @@ class TestCreatedAt(TestBaseModel):
 
 
 class TestUpdatedAt(TestBaseModel):
+
     """
-    Collective and specified testing of
-    the `updated_at` model attribute
+    Collective and specified testing of the `updated_at`
+    model attribute
     """
 
     kwargs = {
@@ -121,12 +124,14 @@ class TestUpdatedAt(TestBaseModel):
     }
 
     def test_updated_at_is_datetime(self):
+
         """Instance attribute is datetime object"""
 
         updated_at = self.model_00.updated_at
         self.assertIsInstance(updated_at, datetime)
 
     def test_updated_at_is_publicly_immutable(self):
+
         """Instance attribute publicly immutable"""
 
         with self.assertRaises(AttributeError) as error:
@@ -138,6 +143,7 @@ class TestUpdatedAt(TestBaseModel):
         self.assertEqual(exception, expect)
 
     def test_updated_at_altered_by_augmenting_object(self):
+
         """Instance alterations alter `updated_at` value"""
 
         creation_datetime = self.model_01.created_at
@@ -151,6 +157,7 @@ class TestUpdatedAt(TestBaseModel):
         self.assertNotEqual(original_datetime, updated_datetime)
 
     def test_update_at_unaltered_when_init_with_kwargs(self):
+
         """Instance spawned with kwargs does not alter `updated_at`"""
 
         model = BaseModel(**self.kwargs)
@@ -166,6 +173,7 @@ class TestUpdatedAt(TestBaseModel):
         self.assertEqual(model.id, self.kwargs.get("id"))
 
     def test_will_drop(self):
+
         """Use kwargs spawned by other instance for accuracy"""
 
         dict_ = self.model_00.to_dict()
@@ -176,10 +184,31 @@ class TestUpdatedAt(TestBaseModel):
         self.assertEqual(self.model_00.updated_at, new_model.updated_at)
 
 
+class TestInitKwargs(TestBaseModel):
+
+    @patch("builtins.print")
+    def test_show_with_valid_input(self, mock_print):
+
+        """
+        Ensures that when init is used with args, uuid and other
+        key values are kept unchanged
+        """
+
+        dt_format = "%Y-%m-%dT%H:%M:%S.%f"
+
+        new_model = BaseModel(**self.model_01.to_dict())
+
+        self.assertEqual(self.model_01.id, new_model.id)
+        self.assertEqual(self.model_01.created_at, new_model.created_at)
+        self.assertEqual(self.model_01.updated_at, new_model.updated_at)
+
+
 class TestSave(TestBaseModel):
+
     """Collective testing of `save` method"""
 
     def test_calling_save_alters_updated_at_attr(self):
+
         """Instance `update_at` alterd when method called"""
 
         creation_datetime = self.model_00.created_at
@@ -196,6 +225,7 @@ class TestSave(TestBaseModel):
 
 
 class TestInitMocking(TestCase):
+
     """Setup objects used across multiple mocked tests"""
 
     @patch("models.base_model.uuid", wraps=uuid)
@@ -211,9 +241,11 @@ class TestInitMocking(TestCase):
 
 
 class TestToDict(TestInitMocking):
+
     """Collective testing of `to_dict` method"""
 
     def test_to_dict_attr_value_pair_provision(self):
+
         """Evaluate instance attributes-value pairing"""
 
         expect = {
@@ -226,9 +258,10 @@ class TestToDict(TestInitMocking):
         self.assertEqual(self.model.to_dict(), expect)
 
     def test_to_dict_after_adding_new_attribute(self):
+
         """
-        Evaluate instance attributes-value pairing when
-        the addition of a new attribute is made
+        Evaluate instance attributes-value pairing when the
+        addition of a new attribute is made
         """
 
         self.model.new_attr = "new attribute"
@@ -252,9 +285,11 @@ class TestToDict(TestInitMocking):
 
 
 class TestDunderStr(TestInitMocking):
+
     """Collective testing of `__str__` property"""
 
     def test_str_property(self):
+
         """Instance str representation standardised layout"""
 
         dict_ = {

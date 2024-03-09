@@ -13,6 +13,46 @@ class Console(cmd.Cmd):
     __MODELS = ["BaseModel"]
     prompt = "(anna) "
 
+    def do_all(self, model_name):
+        """
+        Prints a list of string representations of all model
+        instances. Where model name is provided, models are
+        scoped to said model. Where no model name is provided,
+        all instance representations are printed.
+
+        Parameter
+        ---------
+        model_name : str
+            name of model to be represented
+
+        Expected
+        --------
+            (anna) all
+            (anna) all <model>
+            <model>.<id>
+
+        Non-Existant Model
+        ------------------
+            (anna) all DoesNotExist
+            ** model doesn't exist **
+        """
+
+        if model_name and model_name not in self.__MODELS:
+            return print("** model doesn't exist **")
+
+        if not model_name:
+            models = list(storage.all().values())
+        else:
+            models = [
+                model for model in storage.all().values()
+                if model.to_dict().get("__class__") == model_name
+            ]
+
+        str_models = [str(model) for model in models]
+
+        if str_models:
+            print(str_models)
+
     def do_create(self, model_name):
         """
         Creates a new instance of a model, saves the instance and
@@ -61,7 +101,7 @@ class Console(cmd.Cmd):
         --------
             (anna) destroy <model> <id>
 
-        Missing model name
+        Missing Model Name
         ------------------
             (anna) destroy
             ** model name missing **

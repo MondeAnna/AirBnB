@@ -325,6 +325,24 @@ class TestInitMocking(unittest.TestCase):
         self.model = models.BaseModel()
 
 
+class TestShow(unittest.TestCase):
+    """Collective and specified testing of the `show` method"""
+
+    @patch("builtins.print")
+    def test_show_when_instance_id_not_provided(self, mock_print):
+        """Ensure user informed of missing instance id"""
+
+        models.storage.all = MagicMock()
+
+        models.BaseModel.show()
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        models.BaseModel.show("")
+        self.assertEqual(mock_print.call_count, 2)
+
+        models.storage.all.assert_not_called()
+
+
 class TestToDict(TestInitMocking):
 
     """Collective testing of `to_dict` method"""

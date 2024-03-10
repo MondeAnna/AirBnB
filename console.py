@@ -2,19 +2,17 @@
 """CLI Backend Console"""
 from collections import OrderedDict
 from importlib import import_module
+import shlex
 import cmd
 
 
 models = import_module("models")
-from models.base_model import BaseModel
-from models.user import User
-from models import storage
 
 
 class Console(cmd.Cmd):
     """CLI Backend Console"""
 
-    __MODELS = {
+    __MODELS__ = {
         "BaseModel": models.BaseModel,
         "User": models.User,
     }
@@ -45,7 +43,7 @@ class Console(cmd.Cmd):
             ** model doesn't exist **
         """
 
-        if model_name and model_name not in self.__MODELS:
+        if model_name and model_name not in self.__MODELS__:
             return print("** model doesn't exist **")
 
         if not model_name:
@@ -57,8 +55,8 @@ class Console(cmd.Cmd):
             ]
 
         for kwargs in list_of_kwargs:
-            model = self.__MODELS.get(kwargs.get("__class__"))
-            print(model(**kwargs).super_id)
+            super_id = f"{kwargs.get('__class__')}.{kwargs.get('id')}"
+            print(super_id)
 
     def do_create(self, model_name):
         """
@@ -90,7 +88,7 @@ class Console(cmd.Cmd):
         if not self.__is_valid_model__(model_name):
             return
 
-        Model = self.__MODELS.get(model_name)
+        Model = self.__MODELS__.get(model_name)
         model = Model()
         model.save()
         print(model.id)
@@ -132,10 +130,10 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(parsed["model_name"]):
+        if not self.__is_valid_model__(parsed.get("model_name")):
             return
 
-        if not self.__is_valid_id__(parsed["instance_id"]):
+        if not self.__is_valid_id__(parsed.get("instance_id")):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
@@ -203,16 +201,16 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(parsed["model_name"]):
+        if not self.__is_valid_model__(parsed.get("model_name")):
             return
 
-        if not self.__is_valid_id__(parsed["instance_id"]):
+        if not self.__is_valid_id__(parsed.get("instance_id")):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
         kwargs = models.storage.all().get(key)
 
-        Model = self.__MODELS.get(parsed["model_name"])
+        Model = self.__MODELS__.get(parsed.get("model_name"))
         print(Model(**kwargs))
 
     def do_update(self, line):
@@ -267,16 +265,16 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(parsed["model_name"]):
+        if not self.__is_valid_model__(parsed.get("model_name")):
             return
 
-        if not self.__is_valid_id__(parsed["instance_id"]):
+        if not self.__is_valid_id__(parsed.get("instance_id")):
             return
 
-        if not parsed["attribute"]:
+        if not parsed.get("attribute"):
             return print("** attribute name missing **")
 
-        if not parsed["value"]:
+        if not parsed.get("value"):
             return print("** value missing **")
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
@@ -286,16 +284,17 @@ class Console(cmd.Cmd):
             attr = parsed.get("attribute")
             kwargs[attr] = parsed.get("value")
 
-        Model = self.__MODELS.get(parsed["model_name"])
+        Model = self.__MODELS__.get(parsed.get("model_name"))
         model = Model(**kwargs)
-        storage.save()
+        models.storage.save()
 
     def emptyline(self):
         """Skips to new prompt should input be empty"""
 
         pass
 
-    def __is_valid_id__(self, instance_id):
+    @staticmethod
+    def __is_valid_id__(instance_id):
         """Validates instance id as being existant"""
 
         keys = models.storage.all().keys()
@@ -318,7 +317,7 @@ class Console(cmd.Cmd):
             print("** model name missing **")
             return False
 
-        if model_name not in self.__MODELS:
+        if model_name not in self.__MODELS__:
             print("** model doesn't exist **")
             return False
 
@@ -341,24 +340,26 @@ class Console(cmd.Cmd):
             the instance id
         """
 
-        parsed = OrderedDict({
-            "model_name": None,
-            "instance_id": None,
-            "attribute": None,
-            "value": None,
-        })
+        parsed = OrderedDict(
+            {
+                "model_name": None,
+                "instance_id": None,
+                "attribute": None,
+                "value": None,
+            }
+        )
 
-        split = line.split()
+        split = shlex.split(line)
 
         for key, value in zip(parsed, split):
             parsed[key] = value
 
-        parsed["value"] = self.__type_value(parsed["value"])
+        parsed["value"] = self.__type_value__(parsed.get("value"))
 
         return parsed
 
     @staticmethod
-    def __type_value(value):
+    def __type_value__(value):
         """
         Set the type of the value, at present limited to
         `float`, `int` and `str`
@@ -374,9 +375,16 @@ class Console(cmd.Cmd):
             typed input from user
         """
 
-        for instance in [float, int, str]:
-            if isinstance(value, instance):
-                return instance(value)
+        if not value:
+            return value
+
+        if value.isdigit():
+            return int(value)
+
+        if value.count(".") and not value.replace(".", "").count("@"):
+            return float(value)
+
+        return value
 
 
 if __name__ == "__main__":

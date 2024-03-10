@@ -50,6 +50,21 @@ class BaseModel:
             print(super_id)
 
     @classmethod
+    def create(cls):
+        """
+        Creates a new instance of a model, saves the
+        instance and prints the instance's id. BaseModel
+        is not recognised as a valid model
+        """
+
+        if BaseModel.is_base_model(cls.__name__):
+            return print("** model doesn't exist **")
+
+        model = cls()
+        model.save()
+        print(model.id)
+
+    @classmethod
     def count(cls):
         """Display number of all class specific instances in storage"""
 

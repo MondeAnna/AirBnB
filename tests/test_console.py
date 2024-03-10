@@ -121,13 +121,14 @@ class TestCreate(TestConsole):
     def test_create_with_valid_model(self, mock_print):
         """Ensures that a new model can be created"""
 
-        console.Console().do_create("User")
+        console.Console().do_create("Place")
 
         model_id = mock_print.call_args[0][0]
         new_uuid = uuid.UUID(model_id, version=4)
 
         self.assertTrue(isinstance(new_uuid, uuid.UUID))
         mock_print.assert_called_once()
+        models.storage.save.assert_called_once()
 
     @patch("builtins.print")
     def test_create_without_providing_a_model(self, mock_print):

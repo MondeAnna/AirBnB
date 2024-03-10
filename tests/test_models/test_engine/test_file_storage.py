@@ -5,6 +5,7 @@ to file storage and thereby the file system
 """
 
 
+from importlib import import_module
 from unittest.mock import MagicMock
 from unittest.mock import patch
 from unittest import TestCase
@@ -12,7 +13,7 @@ from unittest import main
 from pathlib import Path
 
 
-from models import FileStorage
+models = import_module("models")
 
 
 class TestFileStorage(TestCase):
@@ -21,7 +22,7 @@ class TestFileStorage(TestCase):
     def setUp(self):
         """Test instance factory"""
 
-        self.storage = FileStorage()
+        self.storage = models.FileStorage()
         self.storage._FileStorage__objects = {}
 
         self.file_path = "file.json"

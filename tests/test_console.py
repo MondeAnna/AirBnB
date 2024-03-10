@@ -2,13 +2,15 @@
 """Tests for the products console"""
 from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta
+from importlib import import_module
 import unittest
 import uuid
 
 
-from models.base_model import BaseModel
-from models import storage
 import console
+
+
+models = import_module("models")
 
 
 class TestConsole(unittest.TestCase):
@@ -17,10 +19,10 @@ class TestConsole(unittest.TestCase):
     def setUp(self):
         """Test instance factory"""
 
-        self.model = BaseModel()
-        storage.new = MagicMock()
-        storage.save = MagicMock()
-        storage.all = MagicMock(
+        self.model = models.BaseModel()
+        models.storage.new = MagicMock()
+        models.storage.save = MagicMock()
+        models.storage.all = MagicMock(
             return_value={self.model.super_id: self.model.to_dict()}
         )
 
@@ -38,7 +40,7 @@ class TestAll(TestConsole):
     def test_all_when_no_models_present(self, mock_print):
         """Ensures that no model is show if none present"""
 
-        storage.all = MagicMock(return_value={})
+        models.storage.all = MagicMock(return_value={})
         console.Console().do_all("")
         mock_print.assert_not_called()
 
@@ -113,8 +115,8 @@ class TestDestroy(TestConsole):
         console.Console().do_destroy(f"BaseModel {self.model.id}")
 
         """a secondary call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 2)
-        storage.save.assert_called_once()
+        self.assertEqual(models.storage.all.call_count, 2)
+        models.storage.save.assert_called_once()
 
     @patch("builtins.print")
     def test_destroy_without_providing_input(self, mock_print):
@@ -129,8 +131,8 @@ class TestDestroy(TestConsole):
         console.Console().do_destroy("")
         mock_print.assert_called_once_with("** model name missing **")
 
-        storage.all.assert_not_called()
-        storage.save.assert_not_called()
+        models.storage.all.assert_not_called()
+        models.storage.save.assert_not_called()
 
     @patch("builtins.print")
     def test_destroy_using_invalid_model(self, mock_print):
@@ -139,8 +141,8 @@ class TestDestroy(TestConsole):
         console.Console().do_destroy("Ice-Cream-Chicken-Popcorn-Coffee")
         mock_print.assert_called_once_with("** model doesn't exist **")
 
-        storage.all.assert_not_called()
-        storage.save.assert_not_called()
+        models.storage.all.assert_not_called()
+        models.storage.save.assert_not_called()
 
     @patch("builtins.print")
     def test_destroy_without_providing_an_id(self, mock_print):
@@ -150,8 +152,8 @@ class TestDestroy(TestConsole):
         mock_print.assert_called_once_with("** instance id missing **")
 
         """a call is made when parsing id"""
-        storage.all.assert_called_once()
-        storage.save.assert_not_called()
+        models.storage.all.assert_called_once()
+        models.storage.save.assert_not_called()
 
     @patch("builtins.print")
     def test_destroy_when_no_match_is_found(self, mock_print):
@@ -161,8 +163,8 @@ class TestDestroy(TestConsole):
         mock_print.assert_called_once_with("** no instance found **")
 
         """a call is made when parsing id"""
-        storage.all.assert_called_once()
-        storage.save.assert_not_called()
+        models.storage.all.assert_called_once()
+        models.storage.save.assert_not_called()
 
 
 class TestShow(TestConsole):
@@ -176,36 +178,23 @@ class TestShow(TestConsole):
         ID not tested as BaseModel looks to create a different id
         even when kwargs are provided during init
         """
-        dt_format = "%Y-%m-%dT%H:%M:%S.%f"
 
         console.Console().do_show(f"BaseModel {self.model.id}")
         call_arg = mock_print.call_args[0][0]
 
-        call_created = datetime.strptime(
-            call_arg.to_dict().get("created_at"), dt_format
-        )
+        call_created = call_arg.to_dict().get("created_at")
+        model_created = self.model.to_dict().get("created_at")
 
-        model_created = datetime.strptime(
-            self.model.to_dict().get("created_at"), dt_format
-        )
+        call_updated = call_arg.to_dict().get("updated_at")
+        model_updated = self.model.to_dict().get("updated_at")
 
-        call_updated = datetime.strptime(
-            call_arg.to_dict().get("updated_at"), dt_format
-        )
-        model_updated = datetime.strptime(
-            self.model.to_dict().get("updated_at"), dt_format
-        )
-
-        created_diff = abs(call_created - model_created)
-        updated_diff = abs(call_updated - model_updated)
-
-        self.assertTrue(created_diff < timedelta(seconds=1))
-        self.assertTrue(updated_diff < timedelta(seconds=1))
+        self.assertEqual(call_created, model_created)
+        self.assertEqual(call_updated, model_updated)
 
         self.assertEqual(type(call_arg), type(self.model))
 
         """a secondary call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 2)
+        self.assertEqual(models.storage.all.call_count, 2)
         mock_print.assert_called_once()
 
     @patch("builtins.print")
@@ -220,7 +209,7 @@ class TestShow(TestConsole):
 
         console.Console().do_show("")
         mock_print.assert_called_once_with("** model name missing **")
-        storage.all.assert_not_called()
+        models.storage.all.assert_not_called()
 
     @patch("builtins.print")
     def test_show_using_invalid_model(self, mock_print):
@@ -228,7 +217,7 @@ class TestShow(TestConsole):
 
         console.Console().do_show("Ice-Cream-Chicken-Popcorn-Coffee")
         mock_print.assert_called_once_with("** model doesn't exist **")
-        storage.all.assert_not_called()
+        models.storage.all.assert_not_called()
 
     @patch("builtins.print")
     def test_show_without_providing_an_id(self, mock_print):
@@ -238,7 +227,7 @@ class TestShow(TestConsole):
         mock_print.assert_called_once_with("** instance id missing **")
 
         """a call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 1)
+        self.assertEqual(models.storage.all.call_count, 1)
 
     @patch("builtins.print")
     def test_show_with_when_match_is_found(self, mock_print):
@@ -248,7 +237,7 @@ class TestShow(TestConsole):
         mock_print.assert_called_once_with("** no instance found **")
 
         """a call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 1)
+        self.assertEqual(models.storage.all.call_count, 1)
 
 
 class TestUpdate(TestConsole):
@@ -264,8 +253,8 @@ class TestUpdate(TestConsole):
         cmd = f"BaseModel {self.model.id} name BestNameEver"
         console.Console().do_update(cmd)
 
-        storage.new.assert_called_once()
-        storage.save.assert_called_once()
+        models.storage.new.assert_called_once()
+        models.storage.save.assert_called_once()
 
     @patch("builtins.print")
     def test_update_without_providing_input(self, mock_print):
@@ -279,7 +268,7 @@ class TestUpdate(TestConsole):
 
         console.Console().do_update("")
         mock_print.assert_called_once_with("** model name missing **")
-        storage.all.assert_not_called()
+        models.storage.all.assert_not_called()
 
     @patch("builtins.print")
     def test_update_using_invalid_model(self, mock_print):
@@ -287,7 +276,7 @@ class TestUpdate(TestConsole):
 
         console.Console().do_update("Ice-Cream-Chicken-Popcorn-Coffee")
         mock_print.assert_called_once_with("** model doesn't exist **")
-        storage.all.assert_not_called()
+        models.storage.all.assert_not_called()
 
     @patch("builtins.print")
     def test_update_without_providing_an_id(self, mock_print):
@@ -297,7 +286,7 @@ class TestUpdate(TestConsole):
         mock_print.assert_called_once_with("** instance id missing **")
 
         """a call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 1)
+        self.assertEqual(models.storage.all.call_count, 1)
 
     @patch("builtins.print")
     def test_update_with_when_match_is_found(self, mock_print):
@@ -307,7 +296,7 @@ class TestUpdate(TestConsole):
         mock_print.assert_called_once_with("** no instance found **")
 
         """a call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 1)
+        self.assertEqual(models.storage.all.call_count, 1)
 
     @patch("builtins.print")
     def test_update_with_when_attribute_name_is_missing(self, mock_print):
@@ -317,7 +306,7 @@ class TestUpdate(TestConsole):
         mock_print.assert_called_once_with("** attribute name missing **")
 
         """a call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 1)
+        self.assertEqual(models.storage.all.call_count, 1)
 
     @patch("builtins.print")
     def test_update_with_when_value_missing(self, mock_print):
@@ -327,7 +316,7 @@ class TestUpdate(TestConsole):
         mock_print.assert_called_once_with("** value missing **")
 
         """a call is made when parsing id"""
-        self.assertEqual(storage.all.call_count, 1)
+        self.assertEqual(models.storage.all.call_count, 1)
 
 
 if __name__ == "__main__":

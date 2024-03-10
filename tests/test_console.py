@@ -9,6 +9,7 @@ import uuid
 
 import console
 
+
 models = import_module("models")
 
 
@@ -40,6 +41,13 @@ class TestDefault(TestConsole):
     """Tests cases for the `default` method"""
 
     @patch("builtins.print")
+    def test_default_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via repl"""
+
+        console.Console().default("BaseModel.all()")
+        mock_print.assert_called_once_with("** unknown syntax: BaseModel.all() **")
+
+    @patch("builtins.print")
     def test_default_with_valid_model(self, mock_print):
         """Ensures that repl command is executed when valid"""
 
@@ -56,6 +64,13 @@ class TestDefault(TestConsole):
 
 class TestAll(TestConsole):
     """Tests cases for the `do_all` method"""
+
+    @patch("builtins.print")
+    def test_all_called_for_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `all`"""
+
+        console.Console().do_all("BaseModel")
+        mock_print.assert_called_once_with("** model doesn't exist **")
 
     @patch("builtins.print")
     def test_all_when_no_models_present(self, mock_print):
@@ -96,6 +111,13 @@ class TestCreate(TestConsole):
     """Tests cases for the `do_create` method"""
 
     @patch("builtins.print")
+    def test_create_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `create`"""
+
+        console.Console().do_create("BaseModel")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+    @patch("builtins.print")
     def test_create_with_valid_model(self, mock_print):
         """Ensures that a new model can be created"""
 
@@ -129,6 +151,13 @@ class TestCreate(TestConsole):
 
 class TestDestroy(TestConsole):
     """Tests cases for the `do_destroy` method"""
+
+    @patch("builtins.print")
+    def test_destroy_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `destroy`"""
+
+        console.Console().do_destroy("BaseModel")
+        mock_print.assert_called_once_with("** model doesn't exist **")
 
     def test_destroy_with_valid_input(self):
         """Ensures that existing model can be destroyed"""
@@ -192,6 +221,13 @@ class TestShow(TestConsole):
     """Tests cases for the `do_show` method"""
 
     @patch("builtins.print")
+    def test_show_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `show`"""
+
+        console.Console().do_show("BaseModel")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+    @patch("builtins.print")
     def test_show_with_valid_input(self, mock_print):
         """
         Ensures that existing model can be shown
@@ -203,15 +239,7 @@ class TestShow(TestConsole):
         console.Console().do_show(f"User {self.user.id}")
         call_arg = mock_print.call_args[0][0]
 
-        call_created = call_arg.to_dict().get("created_at")
-        model_created = self.user.to_dict().get("created_at")
-
-        call_updated = call_arg.to_dict().get("updated_at")
-        model_updated = self.user.to_dict().get("updated_at")
-
-        self.assertEqual(call_created, model_created)
-        self.assertEqual(call_updated, model_updated)
-
+        self.assertEqual(call_arg, self.user)
         self.assertEqual(type(call_arg), type(self.user))
 
         """a secondary call is made when parsing id"""
@@ -263,6 +291,13 @@ class TestShow(TestConsole):
 
 class TestUpdate(TestConsole):
     """Tests cases for the `do_update` method"""
+
+    @patch("builtins.print")
+    def test_update_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `update`"""
+
+        console.Console().do_update("BaseModel")
+        mock_print.assert_called_once_with("** model doesn't exist **")
 
     def test_update_when_all_parameters_present(self):
         """

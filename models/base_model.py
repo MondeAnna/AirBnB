@@ -60,6 +60,37 @@ class BaseModel:
 
         print(f"{cls.__name__} count: {count}")
 
+    @classmethod
+    def is_valid_id(cls, instance_id):
+        """Validates instance id as being existant"""
+
+        keys = models.storage.all().keys()
+        elements = [element for key in keys for element in key.split(".")]
+
+        if not instance_id:
+            print("** instance id missing **")
+            return False
+
+        if instance_id not in elements:
+            print("** no instance found **")
+            return False
+
+        return True
+
+    @classmethod
+    def is_valid_model(cls, model_name):
+        """Validates model name as being existant"""
+
+        if not model_name:
+            print("** model name missing **")
+            return False
+
+        if model_name not in models.ALL_MODELS:
+            print("** model doesn't exist **")
+            return False
+
+        return True
+
     def save(self):
         """Saves present model to storage"""
 

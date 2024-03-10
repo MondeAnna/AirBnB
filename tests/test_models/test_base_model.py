@@ -29,8 +29,8 @@ class TestAll(TestBaseModel):
     """Collective and specified testing of the `all` method"""
 
     @patch("builtins.print")
-    def test_all_when_storage_empty(self, mock_print):
-        """Ensure user is informed where no objects present"""
+    def test_all_is_not_envoked_by_base_model(self, mock_print):
+        """Ensure no printout if storage is empty"""
 
         models.storage.all = MagicMock(return_value={})
 
@@ -257,6 +257,7 @@ class TestUpdatedAt(TestBaseModel):
 
 
 class TestInitKwargs(TestBaseModel):
+    """Collective testing of instantiation with kwargs"""
 
     @patch("builtins.print")
     def test_show_with_valid_input(self, mock_print):

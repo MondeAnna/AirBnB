@@ -119,7 +119,7 @@ class Console(cmd.Cmd):
         informed should:
             - The model's name be missing or invalid
             - The model not exist
-            - The id be missing or invalid
+            - The id be missing
             - The id refer to a non-existing instance
 
         Expected

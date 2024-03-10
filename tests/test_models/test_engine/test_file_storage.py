@@ -3,20 +3,16 @@
 Test suite regarding the manipulation of data in relation
 to file storage and thereby the file system
 """
-
-
+from unittest.mock import MagicMock, patch
 from importlib import import_module
-from unittest.mock import MagicMock
-from unittest.mock import patch
-from unittest import TestCase
-from unittest import main
 from pathlib import Path
+import unittest
 
 
 models = import_module("models")
 
 
-class TestFileStorage(TestCase):
+class TestFileStorage(unittest.TestCase):
     """Setup objects used across multiple tests"""
 
     def setUp(self):
@@ -219,4 +215,4 @@ class TestReload(TestFileStorage):
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()

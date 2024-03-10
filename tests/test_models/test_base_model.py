@@ -1,21 +1,16 @@
 #!/usr/bin/python3
 """Collective testing of attributes related to base model"""
-
-
 from unittest.mock import MagicMock, patch
+from importlib import import_module
 from datetime import datetime
 import unittest
 import uuid
-
-
-from importlib import import_module
 
 
 models = import_module("models")
 
 
 class TestBaseModel(unittest.TestCase):
-
     """Collective testing of attributes related to base model"""
 
     def setUp(self):
@@ -31,7 +26,6 @@ class TestBaseModel(unittest.TestCase):
 
 
 class TestAll(TestBaseModel):
-
     """Collective and specified testing of the `all` method"""
 
     @patch("builtins.print")
@@ -49,23 +43,26 @@ class TestAll(TestBaseModel):
     def test_all_when_instances_not_in_storage(self, mock_print):
         """Ensure user is informed where no BaseModels present"""
 
-        models.storage.all = MagicMock(return_value={
-            "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
-                "__class__": "City",
-                "created_at": "2024-06-24T20:16:48.425363",
-                "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
-                "name": "",
-                "state_id": "",
-                "updated_at": "2024-06-24T20:16:48.425363",
-            },
-            "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
-                "__class__": "Amenity",
-                "created_at": "2024-06-24T20:26:23.358548",
-                "id": "c38faac4-94c7-4705-93d7-50677d21f922",
-                "name": "",
-                "updated_at": "2024-06-24T20:26:23.358548",
-            },
-        })
+        models.storage.all = MagicMock(
+            return_value={
+                "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
+                    "__class__": "City",
+                    "created_at": "2024-06-24T20:16:48.425363",
+                    "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
+                    "name": "",
+                    "state_id": "",
+                    "updated_at": "2024-06-24T20:16:48.425363",
+                },
+                "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
+                    "__class__": "Amenity",
+                    "created_at": "2024-06-24T20:26:23.358548",
+                    "id": "c38faac4-94c7-4705-93d7-50677d21f922",
+                    "name": "",
+                    "updated_at": "2024-06-24T20:26:23.358548",
+                },
+            }
+        )
+        printout = f"** no {self.model_00.__class__.__name__} in storage **"
 
         self.model_00.all()
 
@@ -76,10 +73,12 @@ class TestAll(TestBaseModel):
     def test_all_when_instances_in_storage(self, mock_print):
         """Ensure user is informed when BaseModels present"""
 
-        models.storage.all = MagicMock(return_value={
-            self.model_00.super_id: self.model_00.to_dict(),
-            self.model_01.super_id: self.model_01.to_dict(),
-        })
+        models.storage.all = MagicMock(
+            return_value={
+                self.model_00.super_id: self.model_00.to_dict(),
+                self.model_01.super_id: self.model_01.to_dict(),
+            }
+        )
 
         expected = f"{self.model_01.super_id}"
 
@@ -153,18 +152,15 @@ class TestCount(unittest.TestCase):
 
 
 class TestIdentification(TestBaseModel):
-
     """Collective and specified testing of the `id` model attribute"""
 
     def test_id_is_str(self):
-
         """Instance ID is str type"""
 
         id_ = self.model_00.id
         self.assertIsInstance(id_, str)
 
     def test_id_is_unique(self):
-
         """Instance ID's are unique to each instance"""
 
         id_00 = self.model_00.id
@@ -172,7 +168,6 @@ class TestIdentification(TestBaseModel):
         self.assertNotEqual(id_00, id_01)
 
     def test_super_id(self):
-
         """Instance ID suffixed to model type"""
 
         super_id = self.model_00.super_id
@@ -183,21 +178,18 @@ class TestIdentification(TestBaseModel):
 
 
 class TestCreatedAt(TestBaseModel):
-
     """
     Collective and specified testing of the `created_at`
     model attribute
     """
 
     def test_created_at_is_datetime(self):
-
         """Instance attribute is datetime object"""
 
         created_at = self.model_01.created_at
         self.assertIsInstance(created_at, datetime)
 
     def test_created_at_is_unique_to_instance(self):
-
         """Instance attribute is unique to each instance"""
 
         created_at_00 = self.model_00.created_at
@@ -206,7 +198,6 @@ class TestCreatedAt(TestBaseModel):
 
 
 class TestUpdatedAt(TestBaseModel):
-
     """
     Collective and specified testing of the `updated_at`
     model attribute
@@ -221,14 +212,12 @@ class TestUpdatedAt(TestBaseModel):
     }
 
     def test_updated_at_is_datetime(self):
-
         """Instance attribute is datetime object"""
 
         updated_at = self.model_00.updated_at
         self.assertIsInstance(updated_at, datetime)
 
     def test_updated_at_altered_by_augmenting_object(self):
-
         """Instance alterations alter `updated_at` value"""
 
         creation_datetime = self.model_01.created_at
@@ -242,7 +231,6 @@ class TestUpdatedAt(TestBaseModel):
         self.assertNotEqual(original_datetime, updated_datetime)
 
     def test_update_at_unaltered_when_init_with_kwargs(self):
-
         """Instance spawned with kwargs does not alter `updated_at`"""
 
         model = models.BaseModel(**self.kwargs)
@@ -258,7 +246,6 @@ class TestUpdatedAt(TestBaseModel):
         self.assertEqual(model.id, self.kwargs.get("id"))
 
     def test_will_drop(self):
-
         """Use kwargs spawned by other instance for accuracy"""
 
         dict_ = self.model_00.to_dict()
@@ -273,7 +260,6 @@ class TestInitKwargs(TestBaseModel):
 
     @patch("builtins.print")
     def test_show_with_valid_input(self, mock_print):
-
         """
         Ensures that when init is used with args, uuid and other
         key values are kept unchanged
@@ -289,11 +275,9 @@ class TestInitKwargs(TestBaseModel):
 
 
 class TestSave(TestBaseModel):
-
     """Collective testing of `save` method"""
 
     def test_calling_save_alters_updated_at_attr(self):
-
         """Instance `update_at` alterd when method called"""
 
         creation_datetime = self.model_00.created_at
@@ -310,7 +294,6 @@ class TestSave(TestBaseModel):
 
 
 class TestInitMocking(unittest.TestCase):
-
     """Setup objects used across multiple mocked tests"""
 
     @patch("models.base_model.uuid", wraps=uuid)
@@ -344,11 +327,9 @@ class TestShow(unittest.TestCase):
 
 
 class TestToDict(TestInitMocking):
-
     """Collective testing of `to_dict` method"""
 
     def test_to_dict_attr_value_pair_provision(self):
-
         """Evaluate instance attributes-value pairing"""
 
         expect = {
@@ -361,7 +342,6 @@ class TestToDict(TestInitMocking):
         self.assertEqual(self.model.to_dict(), expect)
 
     def test_to_dict_after_adding_new_attribute(self):
-
         """
         Evaluate instance attributes-value pairing when the
         addition of a new attribute is made
@@ -388,11 +368,9 @@ class TestToDict(TestInitMocking):
 
 
 class TestDunderStr(TestInitMocking):
-
     """Collective testing of `__str__` property"""
 
     def test_str_property(self):
-
         """Instance str representation standardised layout"""
 
         dict_ = {

@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 """Test suite for inheritor of BaseModel"""
-
-
 from unittest.mock import MagicMock, patch
 from importlib import import_module
 import unittest
@@ -10,7 +8,8 @@ import unittest
 models = import_module("models")
 
 
-class TestUser(unittest.TestCase):
+class TestAll(unittest.TestCase):
+    """Collective and specified testing of the `all` method"""
 
     def setUp(self):
         self.amenity = models.Amenity()
@@ -236,7 +235,6 @@ class TestUser(unittest.TestCase):
 
 
 class TestAmenity(unittest.TestCase):
-
     """Collective testing of base model attributes"""
 
     def setUp(self):
@@ -268,7 +266,6 @@ class TestAmenity(unittest.TestCase):
 
 
 class TestCity(unittest.TestCase):
-
     """Collective testing of base model attributes"""
 
     def setUp(self):
@@ -302,7 +299,6 @@ class TestCity(unittest.TestCase):
 
 
 class TestPlace(unittest.TestCase):
-
     """Collective testing of base model attributes"""
 
     def setUp(self):
@@ -352,7 +348,7 @@ class TestPlace(unittest.TestCase):
             "amenity_ids": [
                 "57ad4815-937a-46d7-a900-b760d4aff195",
                 "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
-            ]
+            ],
         }
 
         place = models.Place(**kwargs)
@@ -360,7 +356,6 @@ class TestPlace(unittest.TestCase):
 
 
 class TestReview(unittest.TestCase):
-
     """Collective testing of base model attributes"""
 
     def setUp(self):
@@ -396,7 +391,6 @@ class TestReview(unittest.TestCase):
 
 
 class TestState(unittest.TestCase):
-
     """Collective testing of base model attributes"""
 
     def setUp(self):

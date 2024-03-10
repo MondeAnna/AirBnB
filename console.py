@@ -221,6 +221,9 @@ class Console(cmd.Cmd):
         whereby the attribute value is cast into one of
         three type, float, int or str.
 
+        N.B.: It is advise to input the attribute value within
+        quotations
+
         Of note is that `id`, `created_at` and `updated_at`
         cannot be updated.
 
@@ -257,6 +260,11 @@ class Console(cmd.Cmd):
             (anna) update BaseModel 123-456-789
             ** attribute name missing **
 
+        Immutable Attributes
+        --------------------
+            (anna) update BaseModel created_at
+            ** immutable attribute **
+
         Non-Existant Attribute Value
         ----------------------------
             (anna) update BaseModel 123-456-789 first_name
@@ -274,6 +282,10 @@ class Console(cmd.Cmd):
         if not parsed.get("attribute"):
             return print("** attribute name missing **")
 
+        immutables = ["id", "created_at", "updated_at"]
+        if parsed.get("attribute") in immutables:
+            return print("** immutable attribute **")
+
         if not parsed.get("value"):
             return print("** value missing **")
 
@@ -285,8 +297,7 @@ class Console(cmd.Cmd):
             kwargs[attr] = parsed.get("value")
 
         Model = self.__MODELS__.get(parsed.get("model_name"))
-        model = Model(**kwargs)
-        models.storage.save()
+        Model(**kwargs).save()
 
     def emptyline(self):
         """Skips to new prompt should input be empty"""

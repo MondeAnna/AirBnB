@@ -12,11 +12,6 @@ models = import_module("models")
 class Console(cmd.Cmd):
     """CLI Backend Console"""
 
-    __MODELS__ = {
-        "BaseModel": models.BaseModel,
-        "User": models.User,
-    }
-
     prompt = "(anna) "
 
     def do_all(self, model_name):
@@ -43,7 +38,7 @@ class Console(cmd.Cmd):
             ** model doesn't exist **
         """
 
-        if model_name and model_name not in self.__MODELS__:
+        if model_name and model_name not in models.ALL_MODELS:
             return print("** model doesn't exist **")
 
         if not model_name:
@@ -88,7 +83,7 @@ class Console(cmd.Cmd):
         if not self.__is_valid_model__(model_name):
             return
 
-        Model = self.__MODELS__.get(model_name)
+        Model = models.ALL_MODELS.get(model_name)
         model = Model()
         model.save()
         print(model.id)
@@ -210,7 +205,7 @@ class Console(cmd.Cmd):
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
         kwargs = models.storage.all().get(key)
 
-        Model = self.__MODELS__.get(parsed.get("model_name"))
+        Model = models.ALL_MODELS.get(parsed.get("model_name"))
         print(Model(**kwargs))
 
     def do_update(self, line):
@@ -296,7 +291,7 @@ class Console(cmd.Cmd):
             attr = parsed.get("attribute")
             kwargs[attr] = parsed.get("value")
 
-        Model = self.__MODELS__.get(parsed.get("model_name"))
+        Model = models.ALL_MODELS.get(parsed.get("model_name"))
         Model(**kwargs).save()
 
     def emptyline(self):
@@ -328,7 +323,7 @@ class Console(cmd.Cmd):
             print("** model name missing **")
             return False
 
-        if model_name not in self.__MODELS__:
+        if model_name not in models.ALL_MODELS:
             print("** model doesn't exist **")
             return False
 

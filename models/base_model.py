@@ -17,6 +17,8 @@ class BaseModel:
     attributes and methods for the project's classes
     """
 
+    __IMMUTABLES__ = ["id", "created_at", "updated_at"]
+
     def __init__(self, *args, **kwargs):
         """
         Spawns an existing object or generates a new one
@@ -97,8 +99,8 @@ class BaseModel:
         models.storage.save()
 
     @classmethod
-    def is_base_model(cls, arg):
-        return arg.lower() in ["basemodel", cls.__name__.lower()]
+    def is_base_model(cls, model_name):
+        return model_name.lower() in ["basemodel", cls.__name__.lower()]
 
     @classmethod
     def is_valid_id(cls, instance_id):
@@ -209,6 +211,44 @@ class BaseModel:
             "__class__": self.__class__.__name__,
             **dict_,
         }
+
+    @classmethod
+    def update(cls, instance_id=None, attribute=None, value=None):
+        """
+        Updates an instance of the model matching the
+        given id. The updated instance is then sent to
+        storage. One attribute can be updated at a time,
+        whereby the attribute value is cast into one of
+        three types: float, int or str
+
+        Of note is that `id`, `created_at` and `updated_at`
+        cannot be updated.
+        """
+
+        if BaseModel.is_base_model(cls.__name__):
+            return print("** model doesn't exist **")
+
+        if attribute in cls.__IMMUTABLES__:
+            return print("** immutable attribute **")
+
+        if not BaseModel.is_valid_id(instance_id):
+            return
+
+        if not attribute:
+            return print("** attribute missing **")
+
+        if not value:
+            return print("** value missing **")
+
+        key = f"{cls.__name__}.{instance_id}"
+        kwargs = models.storage.all().get(key)
+
+        if attribute:
+            kwargs[attribute] = value
+
+        model = cls(**kwargs)
+        model.save()
+        return model
 
     def __eq__(self, other):
         have_same_ids = self.super_id == other.super_id

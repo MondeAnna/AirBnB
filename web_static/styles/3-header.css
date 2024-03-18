@@ -1,0 +1,21 @@
+header {
+    background-color: #EDEDED;
+    border-bottom: 1px solid #CCCCCC;
+
+    height: 70px;
+    width: 100%;
+
+    align-items: center;
+    display: flex;
+}
+
+.logo {
+    object-fit: contain;
+    background: url("../images/logo.png") no-repeat center;
+
+    height: 60px;
+    width: 142px;
+
+    padding-left: 20px;
+    padding-top: 10px;
+}

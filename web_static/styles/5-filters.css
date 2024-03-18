@@ -1,0 +1,66 @@
+button {
+    background-color: #586E75;
+
+    text-align: center;
+    font-size: 18px;
+    color: #FFFFFF;
+
+    height: 48px;
+    width: 20%;
+
+    border: 0px solid #FFFFFF;
+    border-radius: 4px;
+
+    margin-left: auto;
+    margin-right: 30px;
+
+    opacity: 1.0;
+    transition: 0.4s;
+}
+
+button:hover {
+    opacity: 0.85;
+    transition: 0.4s;
+}
+
+.filters {
+    background-color: #F4F4F4;
+
+    border: 1px solid #DDDDDD;
+    border-radius: 4px;
+
+    height: 70px;
+    width: 100%;
+
+    margin-bottom: 30px;
+    margin-top: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.amenities, .locations {
+    height: 100%;
+    width: 25%;
+
+    padding-left: 60px;
+}
+
+.locations {
+    border-right: 1px solid #DDDDDD;
+}
+
+.amenities h3, .locations h3 {
+    font-weight: 600;
+
+    margin-bottom: 5px;
+    margin-top: 12px;
+}
+
+.amenities h4, .locations h4 {
+    font-size: 14px;
+    font-weight: 400;
+
+    margin: 0%;
+}

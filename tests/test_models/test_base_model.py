@@ -32,7 +32,7 @@ class TestBaseModel(TestCase):
         return f"property '{attribute}' of '{model}' object has no setter"
 
 
-class TestId(TestBaseModel):
+class TestIdentification(TestBaseModel):
     """
     Collective and specified testing
     of the `id` model attribute
@@ -61,6 +61,15 @@ class TestId(TestBaseModel):
         exception = str(error.exception)
 
         self.assertEqual(exception, expect)
+
+    def test_super_id(self):
+        """Instance ID suffixed to model type"""
+
+        super_id = self.model_00.super_id
+        id_ = self.model_00.id
+
+        self.assertEqual(super_id, f"BaseModel.{id_}")
+        self.assertIsInstance(super_id, str)
 
 
 class TestCreatedAt(TestBaseModel):

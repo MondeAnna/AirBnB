@@ -128,7 +128,9 @@ class TestBaseModelUpdatedAt(TestBaseModel):
 
         creation_datetime = self.model_01.created_at
         original_datetime = self.model_01.updated_at
+
         self.model_01.change = 5
+
         updated_datetime = self.model_01.updated_at
 
         self.assertNotEqual(creation_datetime, updated_datetime)
@@ -158,6 +160,23 @@ class TestBaseModelUpdatedAt(TestBaseModel):
         self.assertEqual(self.model_00.id, new_model.id)
         self.assertEqual(self.model_00.created_at, new_model.created_at)
         self.assertEqual(self.model_00.updated_at, new_model.updated_at)
+
+
+class TestBaseModelSaveMethod(TestBaseModel):
+    """Collective testing of `save` method"""
+
+    def test_calling_save_alters_updated_at_attr(self):
+        """Instance `update_at` alterd when method called"""
+
+        creation_datetime = self.model_00.created_at
+        original_datetime = self.model_00.updated_at
+
+        self.model_00.save()
+
+        updated_datetime = self.model_00.updated_at
+
+        self.assertNotEqual(creation_datetime, updated_datetime)
+        self.assertNotEqual(original_datetime, updated_datetime)
 
 
 if __name__ == "__main__":

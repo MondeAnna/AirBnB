@@ -49,6 +49,11 @@ class BaseModel:
 
         return self.__created_at
 
+    def save(self):
+        """Saves present model to storage"""
+
+        self.__updated_at = datetime.now()
+
     @property
     def updated_at(self):
         """

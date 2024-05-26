@@ -21,6 +21,8 @@ class TestFileStorage(TestCase):
         """Test instance factory"""
 
         self.storage = FileStorage()
+        self.file_path = "file.json"
+
         self.mock_model_00 = MagicMock(id="mock_model_00")
         self.mock_model_01 = MagicMock(id="mock_model_01")
 
@@ -63,7 +65,7 @@ class TestNew(TestFileStorage):
     instances are cached for serialisation
     """
 
-    def test_new_when_single_object_is_provided(self):
+    def test_new_when_single_model_is_provided(self):
         """Ensures the provided instance is tracked"""
 
         self.flush_storage()
@@ -102,6 +104,44 @@ class TestNew(TestFileStorage):
         self.assertTrue(self.mock_model_01.to_dict() in models.values())
         self.assertTrue("BaseModel.mock_model_00" in models.keys())
         self.assertEqual(num_models, 2)
+
+
+class TestSave(TestFileStorage):
+    """Ensure serialisation to JSON file"""
+
+    @patch("json.dump")
+    @patch("builtins.open")
+    @patch("pathlib.Path.touch")
+    @patch("pathlib.Path.is_file", return_value=False)
+    def test_save_with_no_file_on_system(
+        self, mock_is_file, mock_touch, mock_open, mock_dump
+    ):
+        """Ensure creates a new file if none present"""
+
+        self.flush_storage()
+        self.storage.save()
+
+        mock_is_file.assert_called_once_with()
+        mock_touch.assert_called_once()
+
+        mock_open.assert_called_once_with(self.file_path, "w")
+        mock_dump.assert_called_once_with({}, mock_open().__enter__())
+
+    @patch("json.dump")
+    @patch("builtins.open")
+    @patch("pathlib.Path.is_file", return_value=True)
+    def test_save_with_cached_models(self, mock_if_file, mock_open, mock_dump):
+        """Ensures writes to file when cached models present"""
+
+        cache = {self.mock_model_00.super_id: self.mock_model_00.to_dict()}
+
+        self.flush_storage()
+
+        self.storage.new(self.mock_model_00)
+        self.storage.save()
+
+        mock_open.assert_called_once_with(self.file_path, "w")
+        mock_dump.assert_called_once_with(cache, mock_open().__enter__())
 
 
 if __name__ == "__main__":

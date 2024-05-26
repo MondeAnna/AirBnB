@@ -28,11 +28,11 @@ class TestBaseModel(TestCase):
         self.model_01 = BaseModel()
 
     @staticmethod
-    def expected_exception(attribute, model):
+    def expect_exception(attribute, model):
         return f"property '{attribute}' of '{model}' object has no setter"
 
 
-class TestBaseModelId(TestBaseModel):
+class TestId(TestBaseModel):
     """
     Collective and specified testing
     of the `id` model attribute
@@ -41,8 +41,8 @@ class TestBaseModelId(TestBaseModel):
     def test_id_is_str(self):
         """Instance ID is str type"""
 
-        is_str = isinstance(self.model_00.id, str)
-        self.assertTrue(is_str)
+        id_ = self.model_00.id
+        self.assertIsInstance(id_, str)
 
     def test_id_is_unique(self):
         """Instance ID's are unique to each instance"""
@@ -57,13 +57,13 @@ class TestBaseModelId(TestBaseModel):
         with self.assertRaises(AttributeError) as error:
             self.model_01.id = "new id"
 
-        expected = self.expected_exception("id", "BaseModel")
+        expect = self.expect_exception("id", "BaseModel")
         exception = str(error.exception)
 
-        self.assertEqual(exception, expected)
+        self.assertEqual(exception, expect)
 
 
-class TestBaseModelCreatedAt(TestBaseModel):
+class TestCreatedAt(TestBaseModel):
     """
     Collective and specified testing of
     the `created_at` model attribute
@@ -72,8 +72,8 @@ class TestBaseModelCreatedAt(TestBaseModel):
     def test_created_at_is_datetime(self):
         """Instance attribute is datetime object"""
 
-        is_datetime = isinstance(self.model_01.created_at, datetime)
-        self.assertTrue(is_datetime)
+        created_at = self.model_01.created_at
+        self.assertIsInstance(created_at, datetime)
 
     def test_created_at_is_unique_to_instance(self):
         """Instance attribute is unique to each instance"""
@@ -88,13 +88,13 @@ class TestBaseModelCreatedAt(TestBaseModel):
         with self.assertRaises(AttributeError) as error:
             self.model_00.created_at = datetime.now()
 
-        expected = self.expected_exception("created_at", "BaseModel")
+        expect = self.expect_exception("created_at", "BaseModel")
         exception = str(error.exception)
 
-        self.assertEqual(exception, expected)
+        self.assertEqual(exception, expect)
 
 
-class TestBaseModelUpdatedAt(TestBaseModel):
+class TestUpdatedAt(TestBaseModel):
     """
     Collective and specified testing of
     the `updated_at` model attribute
@@ -111,8 +111,8 @@ class TestBaseModelUpdatedAt(TestBaseModel):
     def test_updated_at_is_datetime(self):
         """Instance attribute is datetime object"""
 
-        is_datetime = isinstance(self.model_00.updated_at, datetime)
-        self.assertTrue(is_datetime)
+        updated_at = self.model_00.updated_at
+        self.assertIsInstance(updated_at, datetime)
 
     def test_updated_at_is_publicly_immutable(self):
         """Instance attribute publicly immutable"""
@@ -120,10 +120,10 @@ class TestBaseModelUpdatedAt(TestBaseModel):
         with self.assertRaises(AttributeError) as error:
             self.model_00.updated_at = datetime.now()
 
-        expected = self.expected_exception("updated_at", "BaseModel")
+        expect = self.expect_exception("updated_at", "BaseModel")
         exception = str(error.exception)
 
-        self.assertEqual(exception, expected)
+        self.assertEqual(exception, expect)
 
     def test_updated_at_altered_by_augmenting_object(self):
         """Instance alterations alter `updated_at` value"""
@@ -143,11 +143,11 @@ class TestBaseModelUpdatedAt(TestBaseModel):
 
         model = BaseModel(**self.kwargs)
 
-        expected_created_at = datetime(2017, 9, 28, 21, 3, 54, 52298)
-        expected_updated_at = datetime(2017, 9, 30, 13, 33, 33, 52302)
+        expect_created_at = datetime(2017, 9, 28, 21, 3, 54, 52298)
+        expect_updated_at = datetime(2017, 9, 30, 13, 33, 33, 52302)
 
-        self.assertEqual(model.created_at, expected_created_at)
-        self.assertEqual(model.updated_at, expected_updated_at)
+        self.assertEqual(model.created_at, expect_created_at)
+        self.assertEqual(model.updated_at, expect_updated_at)
 
         self.assertEqual(model.my_number, self.kwargs.get("my_number"))
         self.assertEqual(model.name, self.kwargs.get("name"))
@@ -164,7 +164,7 @@ class TestBaseModelUpdatedAt(TestBaseModel):
         self.assertEqual(self.model_00.updated_at, new_model.updated_at)
 
 
-class TestBaseModelSaveMethod(TestBaseModel):
+class TestSave(TestBaseModel):
     """Collective testing of `save` method"""
 
     def test_calling_save_alters_updated_at_attr(self):
@@ -181,58 +181,78 @@ class TestBaseModelSaveMethod(TestBaseModel):
         self.assertNotEqual(original_datetime, updated_datetime)
 
 
-class TestBaseModelToDict(TestBaseModel):
-    """Collective testing of `to_dict` method"""
+class TestInitMocking(TestCase):
+    """Setup objects used across multiple mocked tests"""
 
     @patch("models.base_model.uuid", wraps=uuid)
     @patch("models.base_model.datetime", wraps=datetime)
-    def test_to_dict(self, mock_dt, mock_uuid):
-        """Evaluate instance attributes-value pairing"""
-
-        now = datetime.now()
-        mock_dt.now.return_value = now
-        now_str = now.isoformat()
-
+    def setUp(self, mock_dt, mock_uuid):
         mock_uuid.uuid4.return_value = "unique id"
 
-        model = BaseModel()
+        self.init_time = datetime.now()
+        mock_dt.now.return_value = self.init_time
+        self.init_time_str = self.init_time.isoformat()
 
-        expected = {
+        self.model = BaseModel()
+
+
+class TestToDict(TestInitMocking):
+    """Collective testing of `to_dict` method"""
+
+    def test_to_dict_attr_value_pair_provision(self):
+        """Evaluate instance attributes-value pairing"""
+
+        expect = {
             "__class__": "BaseModel",
-            "created_at": now_str,
+            "created_at": self.init_time_str,
             "id": "unique id",
-            "updated_at": now_str,
+            "updated_at": self.init_time_str,
         }
 
-        self.assertEqual(model.to_dict(), expected)
+        self.assertEqual(self.model.to_dict(), expect)
+
+    def test_to_dict_after_adding_new_attribute(self):
+        """
+        Evaluate instance attributes-value pairing when
+        the addition of a new attribute is made
+        """
+
+        self.model.new_attr = "new attribute"
+
+        expect = {
+            "__class__": "BaseModel",
+            "created_at": self.init_time_str,
+            "id": "unique id",
+            "new_attr": "new attribute",
+            "updated_at": self.init_time_str,
+        }
+
+        dict_ = self.model.to_dict()
+
+        self.assertNotEqual(dict_.get("updated_at"), expect.get("updated_at"))
+        self.assertEqual(dict_.get("created_at"), expect.get("created_at"))
+
+        self.assertEqual(dict_.get("__class__"), expect.get("__class__"))
+        self.assertEqual(dict_.get("new_attr"), expect.get("new_attr"))
+        self.assertEqual(dict_.get("id"), expect.get("id"))
 
 
-class TestBaseModelStrProperty(TestBaseModel):
+class TestDunderStr(TestInitMocking):
     """Collective testing of `__str__` property"""
 
-    @patch("models.base_model.uuid", wraps=uuid)
-    @patch("models.base_model.datetime", wraps=datetime)
-    def test_str_property(self, mock_dt, mock_uuid):
+    def test_str_property(self):
         """Instance str representation standardised layout"""
 
-        now = datetime.now()
-        mock_dt.now.return_value = now
-
-        mock_id = "unique id"
-        mock_uuid.uuid4.return_value = mock_id
-
-        model = BaseModel()
-
         dict_ = {
-            "created_at": now,
-            "id": mock_id,
-            "updated_at": now,
+            "created_at": self.init_time,
+            "id": "unique id",
+            "updated_at": self.init_time,
         }
 
-        expected = f"[BaseModel] ({mock_id}) {dict_}"
-        actual = str(model)
+        expect = f"[BaseModel] (unique id) {dict_}"
+        actual = str(self.model)
 
-        self.assertEqual(actual, expected)
+        self.assertEqual(actual, expect)
 
 
 if __name__ == "__main__":

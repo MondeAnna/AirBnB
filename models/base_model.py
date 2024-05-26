@@ -55,8 +55,21 @@ class BaseModel:
 
         self.__updated_at = datetime.now()
 
+    @property
+    def super_id(self):
+        """
+        Returns the model's name prepended to its version four
+        form of the RFC 4122 Standardised UUID (Universally Unique
+        Identifiers)
+        """
+
+        return f"{self.__class__.__name__}.{self.__id}"
+
     def to_dict(self):
-        """Returns serialised method/attr-to-value pair for current model"""
+        """
+        Returns serialised method/attr-to-value pair for current
+        model
+        """
 
         class_name = self.__class__.__name__
         prefix = f"_{class_name}__"

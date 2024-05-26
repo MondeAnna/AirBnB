@@ -38,6 +38,21 @@ class FileStorage:
 
         self.__objects[model.super_id] = model.to_dict()
 
+    def reload(self):
+        """Reload cache with models stored on file"""
+
+        path = Path(self.__file_path)
+
+        if not path.is_file():
+            return
+
+        if not path.stat().st_size:
+            self.__objects = {}
+            return
+
+        with open(self.__file_path, "r") as file:
+            self.__objects = json.load(file)
+
     def save(self):
         """
         Writes to file cached models as JSON

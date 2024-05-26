@@ -207,5 +207,33 @@ class TestBaseModelToDict(TestBaseModel):
         self.assertEqual(model.to_dict(), expected)
 
 
+class TestBaseModelStrProperty(TestBaseModel):
+    """Collective testing of `__str__` property"""
+
+    @patch("models.base_model.uuid", wraps=uuid)
+    @patch("models.base_model.datetime", wraps=datetime)
+    def test_str_property(self, mock_dt, mock_uuid):
+        """Instance str representation standardised layout"""
+
+        now = datetime.now()
+        mock_dt.now.return_value = now
+
+        mock_id = "unique id"
+        mock_uuid.uuid4.return_value = mock_id
+
+        model = BaseModel()
+
+        dict_ = {
+            "created_at": now,
+            "id": mock_id,
+            "updated_at": now,
+        }
+
+        expected = f"[BaseModel] ({mock_id}) {dict_}"
+        actual = str(model)
+
+        self.assertEqual(actual, expected)
+
+
 if __name__ == "__main__":
     main()

@@ -5,7 +5,11 @@
 !.gitignore
 !*.md
 !*.png
+!*.py
 !AUTHORS
 
 # except: directories
 !img
+!models
+!tests
+!tests/test_models

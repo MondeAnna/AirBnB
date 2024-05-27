@@ -9,6 +9,7 @@ from unittest.mock import MagicMock
 from unittest.mock import patch
 from unittest import TestCase
 from unittest import main
+from pathlib import Path
 
 
 from models import FileStorage
@@ -164,14 +165,14 @@ class TestReload(TestFileStorage):
 
         self.assertEqual(self.storage.all(), {})
 
-    @patch("json.load", return_value={})
+    @patch("json.load")
     @patch("builtins.open")
     @patch("pathlib.Path.stat")
     @patch("pathlib.Path.is_file", return_value=True)
     def test_reload_resets_cache_when_file_is_empty(
         self, mock_is_file, mock_stat, mock_open, mock_load
     ):
-        """Ensure reloading empty file empties cache"""
+        """Ensure reloading empty file renders empty cache"""
 
         mock_stat.return_value.st_size = 0
 
@@ -200,20 +201,20 @@ class TestReload(TestFileStorage):
     ):
         """Ensure reloading with a non-empty refreshes cache"""
 
-        mock_stat.return_value.st_size = 10
         mock_load.return_value = self.mock_load_side_effect
+        mock_stat.return_value.st_size = 1
 
         pre_call = self.storage.all()
         self.storage.reload()
         post_call = self.storage.all()
+
+        self.assertNotEqual(pre_call, post_call)
 
         mock_is_file.assert_called_once()
         mock_stat.assert_called_once()
 
         mock_open.assert_called_once_with(self.file_path, "r")
         mock_load.assert_called_once()
-
-        self.assertNotEqual(pre_call, post_call)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from unittest import main
 import uuid
 
 
-from models import BaseModel
+from models.base_model import BaseModel
 
 
 class TestBaseModel(TestCase):

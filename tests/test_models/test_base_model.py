@@ -5,6 +5,7 @@ related to base model
 """
 
 
+from unittest.mock import MagicMock
 from unittest.mock import patch
 from datetime import datetime
 from unittest import TestCase
@@ -13,6 +14,7 @@ import uuid
 
 
 from models.base_model import BaseModel
+from models import storage
 
 
 class TestBaseModel(TestCase):
@@ -26,6 +28,7 @@ class TestBaseModel(TestCase):
 
         self.model_00 = BaseModel()
         self.model_01 = BaseModel()
+        storage.save = MagicMock()
 
     @staticmethod
     def expect_exception(attribute, model):
@@ -185,6 +188,8 @@ class TestSave(TestBaseModel):
         self.model_00.save()
 
         updated_datetime = self.model_00.updated_at
+
+        storage.save.assert_called_once()
 
         self.assertNotEqual(creation_datetime, updated_datetime)
         self.assertNotEqual(original_datetime, updated_datetime)

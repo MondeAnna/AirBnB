@@ -47,6 +47,53 @@ class Console(cmd.Cmd):
         model.save()
         print(model.id)
 
+    def do_destroy(self, line):
+        """
+        Deletes an instance based on the model name and id
+        with the changes saved to storage. The user is
+        informed should:
+            - The model's name be missing or invalid
+            - The model not exist
+            - The id be missing or invalid
+            - The id refer to a non-existing instance
+
+        Expected
+        --------
+            (anna) destroy <model> <id>
+
+        Missing model name
+        ------------------
+            (anna) destroy
+            ** model name missing **
+
+        Non-Existant Model
+        ------------------
+            (anna) destroy DoesNotExist
+            ** model doesn't exist **
+
+        Missing Instance ID
+        -------------------
+            (anna) destroy <model>
+            ** instance id missing **
+
+        Non-Existant Instance ID
+        ------------------------
+            (anna) destroy <model> <id>
+            ** no instance found **
+        """
+
+        model_name, instance_id = self.__split_line__(line)
+
+        if not self.__is_valid_model__(model_name):
+            return
+
+        if not self.__is_valid_id__(instance_id):
+            return
+
+        key = f"{model_name}.{instance_id}"
+        storage.all().pop(key)
+        storage.save()
+
     def do_EOF(self, line):
         """Exits the programme when user enters `ctrl+d`"""
 
@@ -106,11 +153,7 @@ class Console(cmd.Cmd):
             ** no instance found **
         """
 
-        if line.count(" "):
-            model_name, instance_id, *_ = line.split()
-        else:
-            model_name = line
-            instance_id = ""
+        model_name, instance_id = self.__split_line__(line)
 
         if not self.__is_valid_model__(model_name):
             return
@@ -155,6 +198,32 @@ class Console(cmd.Cmd):
             return False
 
         return True
+
+    @staticmethod
+    def __split_line__(line):
+        """
+        Separate line into model name and instance id
+
+        Parameter
+        ---------
+        line : str
+            user provided input
+
+        Return
+        ------
+        tuple[str]
+            a paired tuple containing strings representing
+            at index 0, the model name and at index 1,
+            the instance id
+        """
+
+        model_name = line
+        instance_id = ""
+
+        if line.count(" "):
+            model_name, instance_id, *_ = line.split()
+
+        return model_name, instance_id
 
 
 if __name__ == "__main__":

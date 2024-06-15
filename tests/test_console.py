@@ -64,6 +64,68 @@ class TestCreate(TestConsole):
         mock_print.assert_called_once_with("** model doesn't exist **")
 
 
+class TestDestroy(TestConsole):
+
+    """Tests cases for the `do_destroy` method"""
+
+    def test_destroy_with_valid_input(self):
+        """Ensures that existing model can be destroyed"""
+
+        console.Console().do_destroy(f"BaseModel {self.model.id}")
+
+        """a secondary call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 2)
+        storage.save.assert_called_once()
+
+    @patch("builtins.print")
+    def test_destroy_without_providing_input(self, mock_print):
+        """
+        Ensures that user is informed of need for both a
+        model and an id
+
+        In order to emulate cmd.Cmd actively taking `no input`,
+        an empty string has to be provided in the test case
+        """
+
+        console.Console().do_destroy("")
+        mock_print.assert_called_once_with("** model name missing **")
+
+        storage.all.assert_not_called()
+        storage.save.assert_not_called()
+
+    @patch("builtins.print")
+    def test_destroy_using_invalid_model(self, mock_print):
+        """Ensures that user is informed in model is invalid"""
+
+        console.Console().do_destroy("Ice-Cream-Chicken-Popcorn-Coffee")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+        storage.all.assert_not_called()
+        storage.save.assert_not_called()
+
+    @patch("builtins.print")
+    def test_destroy_without_providing_an_id(self, mock_print):
+        """Ensures that user is informed of the need of in id"""
+
+        console.Console().do_destroy("BaseModel")
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        """a call is made when parsing id"""
+        storage.all.assert_called_once()
+        storage.save.assert_not_called()
+
+    @patch("builtins.print")
+    def test_destroy_when_no_match_is_found(self, mock_print):
+        """Ensures that user is informed if no match is found"""
+
+        console.Console().do_destroy("BaseModel 1234-1234-1234-1234")
+        mock_print.assert_called_once_with("** no instance found **")
+
+        """a call is made when parsing id"""
+        storage.all.assert_called_once()
+        storage.save.assert_not_called()
+
+
 class TestShow(TestConsole):
     """Tests cases for the `do_show` method"""
 
@@ -115,6 +177,9 @@ class TestShow(TestConsole):
 
         console.Console().do_show("BaseModel 1234-1234-1234-1234")
         mock_print.assert_called_once_with("** no instance found **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 1)
 
 
 if __name__ == "__main__":

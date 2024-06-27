@@ -36,10 +36,28 @@ class BaseModel:
         self.__init_kwargs__(kwargs) if kwargs else self.__init_default__()
         models.storage.new(self)
 
+    @classmethod
+    def all(cls):
+        """
+        Prints a list of string representations of all instances.
+        Where instances are scoped to calling class.
+        """
+
+        all_models = [
+            model for model in models.storage.all().keys()
+            if model.count(cls.__name__)
+        ]
+
+        if not all_models:
+            print(f"** no {cls.__name__} in storage **")
+
+        for model in all_models:
+            print(model)
+
     def save(self):
         """Saves present model to storage"""
 
-        self.__updated_at = datetime.now()
+        self.updated_at = datetime.now()
         models.storage.save()
 
     @property

@@ -7,6 +7,7 @@ from unittest.mock import patch
 from datetime import datetime
 from unittest import TestCase
 from unittest import main
+from unittest import skip
 import uuid
 
 
@@ -30,6 +31,69 @@ class TestBaseModel(TestCase):
     @staticmethod
     def expect_exception(attribute, model):
         return f"property '{attribute}' of '{model}' object has no setter"
+
+
+class TestAll(TestBaseModel):
+
+    """Collective and specified testing of the `all` method"""
+
+    @patch("builtins.print")
+    def test_all_when_storage_empty(self, mock_print):
+        """Ensure user is informed where no objects present"""
+
+        models.storage.all = MagicMock(return_value={})
+        printout = f"** no {self.model_00.__class__.__name__} in storage **"
+
+        self.model_00.all()
+        mock_print.assert_called_once_with(printout)
+        models.storage.all.assert_called_once()
+
+    @patch("builtins.print")
+    def test_all_when_instances_not_in_storage(self, mock_print):
+        """Ensure user is informed where no BaseModels present"""
+
+        models.storage.all = MagicMock(return_value={
+            "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
+                "__class__": "City",
+                "created_at": "2024-06-24T20:16:48.425363",
+                "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
+                "name": "",
+                "state_id": "",
+                "updated_at": "2024-06-24T20:16:48.425363",
+            },
+            "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
+                "__class__": "Amenity",
+                "created_at": "2024-06-24T20:26:23.358548",
+                "id": "c38faac4-94c7-4705-93d7-50677d21f922",
+                "name": "",
+                "updated_at": "2024-06-24T20:26:23.358548",
+            },
+        })
+        printout = f"** no {self.model_00.__class__.__name__} in storage **"
+
+        self.model_00.all()
+        mock_print.assert_called_once_with(printout)
+        models.storage.all.assert_called_once()
+
+    @patch("builtins.print")
+    def test_all_when_instances_in_storage(self, mock_print):
+        """Ensure user is informed when BaseModels present"""
+
+        models.storage.all = MagicMock(return_value={
+            self.model_00.super_id: self.model_00.to_dict(),
+            self.model_01.super_id: self.model_01.to_dict(),
+        })
+
+        expected = f"{self.model_01.super_id}"
+
+        self.model_00.all()
+
+        """mock_print only captures the last printout"""
+        last_printout = mock_print.call_args[0][0]
+
+        self.assertEqual(last_printout, expected)
+        self.assertEqual(mock_print.call_count, 2)
+        self.assertEqual(models.storage.all.call_count, 1)
 
 
 class TestIdentification(TestBaseModel):
@@ -177,7 +241,7 @@ class TestSave(TestBaseModel):
         """Instance `update_at` alterd when method called"""
 
         creation_datetime = self.model_00.created_at
-        original_datetime = self.model_00.updated_at
+        original_updated_datetime = self.model_00.updated_at
 
         self.model_00.save()
 
@@ -185,8 +249,8 @@ class TestSave(TestBaseModel):
 
         models.storage.save.assert_called_once()
 
-        self.assertEqual(creation_datetime, updated_datetime)
-        self.assertEqual(original_datetime, updated_datetime)
+        self.assertNotEqual(creation_datetime, updated_datetime)
+        self.assertNotEqual(original_updated_datetime, updated_datetime)
 
 
 class TestInitMocking(TestCase):

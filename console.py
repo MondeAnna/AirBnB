@@ -64,17 +64,11 @@ class Console(cmd.Cmd):
             return print("** model doesn't exist **")
 
         if not model_name:
-            list_of_kwargs = list(storage.all().values())
+            for cls in ALL_MODELS.values():
+                cls.all()
         else:
-            list_of_kwargs = [
-                kwargs
-                for kwargs in storage.all().values()
-                if kwargs.get("__class__") == model_name
-            ]
-
-        for kwargs in list_of_kwargs:
-            super_id = f"{kwargs.get('__class__')}.{kwargs.get('id')}"
-            print(super_id)
+            cls = ALL_MODELS.get(model_name)
+            cls.all()
 
     def do_create(self, model_name):
         """
@@ -104,7 +98,7 @@ class Console(cmd.Cmd):
             ** model doesn't exist **
         """
 
-        if not self.__is_valid_model__(model_name):
+        if not BaseModel.is_valid_model(model_name):
             return
 
         Model = ALL_MODELS.get(model_name)
@@ -149,10 +143,10 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(parsed.get("model_name")):
+        if not BaseModel.is_valid_model(parsed.get("model_name")):
             return
 
-        if not self.__is_valid_id__(parsed.get("instance_id")):
+        if not BaseModel.is_valid_id(parsed.get("instance_id")):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
@@ -220,17 +214,14 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(parsed.get("model_name")):
+        if not BaseModel.is_valid_model(parsed.get("model_name")):
             return
 
-        if not self.__is_valid_id__(parsed.get("instance_id")):
+        if not BaseModel.is_valid_id(parsed.get("instance_id")):
             return
-
-        key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        kwargs = storage.all().get(key)
 
         Model = ALL_MODELS.get(parsed.get("model_name"))
-        print(Model(**kwargs))
+        Model.show(parsed.get("instance_id"))
 
     def do_update(self, line):
         """
@@ -292,10 +283,10 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not self.__is_valid_model__(parsed.get("model_name")):
+        if not BaseModel.is_valid_model(parsed.get("model_name")):
             return
 
-        if not self.__is_valid_id__(parsed.get("instance_id")):
+        if not BaseModel.is_valid_id(parsed.get("instance_id")):
             return
 
         if not parsed.get("attribute"):
@@ -322,36 +313,6 @@ class Console(cmd.Cmd):
         """Skips to new prompt should input be empty"""
 
         pass
-
-    @staticmethod
-    def __is_valid_id__(instance_id):
-        """Validates instance id as being existant"""
-
-        keys = storage.all().keys()
-        elements = [element for key in keys for element in key.split(".")]
-
-        if not instance_id:
-            print("** instance id missing **")
-            return False
-
-        if instance_id not in elements:
-            print("** no instance found **")
-            return False
-
-        return True
-
-    def __is_valid_model__(self, model_name):
-        """Validates model name as being existant"""
-
-        if not model_name:
-            print("** model name missing **")
-            return False
-
-        if model_name not in ALL_MODELS:
-            print("** model doesn't exist **")
-            return False
-
-        return True
 
     def __parse_line__(self, line):
         """

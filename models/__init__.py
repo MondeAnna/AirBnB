@@ -1,14 +1,7 @@
 #!/usr/bin/python3
-"""Pre-Initial vital system components"""
-
-
+"""Pre-Initial vital system components, ordered for dynamic imports"""
 from models.engine.file_storage import FileStorage
 from models.base_model import BaseModel
-
-
-"""subclasses of BaseModel need be imported after"""
-
-
 from models.amenity import Amenity
 from models.city import City
 from models.place import Place

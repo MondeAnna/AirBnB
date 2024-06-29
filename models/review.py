@@ -1,11 +1,8 @@
 #!/usr/bin/python3
-
 """
-Review Module: The definition, documentation and encapsulation of all common
-attributes and methods for the Review class
+Review Module: The definition, documentation and encapsulation
+of all common attributes and methods for the Review class
 """
-
-
 from importlib import import_module
 
 
@@ -13,7 +10,6 @@ models = import_module("models")
 
 
 class Review(models.BaseModel):
-
     """
     The definition, documentation and encapsulation of all common
     attributes and methods for the Review class

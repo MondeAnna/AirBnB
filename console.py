@@ -6,13 +6,35 @@ import shlex
 import cmd
 
 
-models = import_module("models")
+from models import *
 
 
 class Console(cmd.Cmd):
     """CLI Backend Console"""
 
     prompt = "(anna) "
+
+    def default(self, line):
+        """
+        Attempt at executing cli input when provided command
+        does not match the provided definitions, where code
+        is executed as though it is Python code
+
+        Parameter
+        ---------
+        line : str
+            user input
+
+        Example
+        -------
+            (anna) User.all()
+            User.0aff3461-4768-4d00-9a2e-0d58ce3e4a58
+        """
+
+        try:
+            exec(line)
+        except Exception:
+            print(f"** unknown syntax: {line} **")
 
     def do_all(self, model_name):
         """
@@ -38,14 +60,14 @@ class Console(cmd.Cmd):
             ** model doesn't exist **
         """
 
-        if model_name and model_name not in models.ALL_MODELS:
+        if model_name and model_name not in ALL_MODELS:
             return print("** model doesn't exist **")
 
         if not model_name:
-            list_of_kwargs = list(models.storage.all().values())
+            list_of_kwargs = list(storage.all().values())
         else:
             list_of_kwargs = [
-                kwargs for kwargs in models.storage.all().values()
+                kwargs for kwargs in storage.all().values()
                 if kwargs.get("__class__") == model_name
             ]
 
@@ -83,7 +105,7 @@ class Console(cmd.Cmd):
         if not self.__is_valid_model__(model_name):
             return
 
-        Model = models.ALL_MODELS.get(model_name)
+        Model = ALL_MODELS.get(model_name)
         model = Model()
         model.save()
         print(model.id)
@@ -132,8 +154,8 @@ class Console(cmd.Cmd):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        models.storage.all().pop(key)
-        models.storage.save()
+        storage.all().pop(key)
+        storage.save()
 
     def do_EOF(self, line):
         """Exits the programme when user enters `ctrl+d`"""
@@ -203,9 +225,9 @@ class Console(cmd.Cmd):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        kwargs = models.storage.all().get(key)
+        kwargs = storage.all().get(key)
 
-        Model = models.ALL_MODELS.get(parsed.get("model_name"))
+        Model = ALL_MODELS.get(parsed.get("model_name"))
         print(Model(**kwargs))
 
     def do_update(self, line):
@@ -285,13 +307,13 @@ class Console(cmd.Cmd):
             return print("** value missing **")
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        kwargs = models.storage.all().get(key)
+        kwargs = storage.all().get(key)
 
         if parsed.get("attribute"):
             attr = parsed.get("attribute")
             kwargs[attr] = parsed.get("value")
 
-        Model = models.ALL_MODELS.get(parsed.get("model_name"))
+        Model = ALL_MODELS.get(parsed.get("model_name"))
         Model(**kwargs).save()
 
     def emptyline(self):
@@ -303,7 +325,7 @@ class Console(cmd.Cmd):
     def __is_valid_id__(instance_id):
         """Validates instance id as being existant"""
 
-        keys = models.storage.all().keys()
+        keys = storage.all().keys()
         elements = [element for key in keys for element in key.split(".")]
 
         if not instance_id:
@@ -323,7 +345,7 @@ class Console(cmd.Cmd):
             print("** model name missing **")
             return False
 
-        if model_name not in models.ALL_MODELS:
+        if model_name not in ALL_MODELS:
             print("** model doesn't exist **")
             return False
 

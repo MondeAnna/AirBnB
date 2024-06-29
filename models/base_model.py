@@ -3,8 +3,6 @@
 Base Module: Definition, documentation and encapsulation of
 all common attributes and methods for the project's classes
 """
-
-
 from importlib import import_module
 from datetime import datetime
 import uuid
@@ -129,8 +127,7 @@ class BaseModel:
         """
 
         dict_ = {
-            key: value.isoformat()
-            if isinstance(value, datetime) else value
+            key: value.isoformat() if isinstance(value, datetime) else value
             for key, value in sorted(self.__dict__.items())
         }
 

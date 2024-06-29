@@ -3,8 +3,6 @@
 File Storage: Definition, documentation and encapsulation
 of all models onto the operating system's file storage
 """
-
-
 from datetime import datetime
 from pathlib import Path
 import json

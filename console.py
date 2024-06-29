@@ -67,7 +67,8 @@ class Console(cmd.Cmd):
             list_of_kwargs = list(storage.all().values())
         else:
             list_of_kwargs = [
-                kwargs for kwargs in storage.all().values()
+                kwargs
+                for kwargs in storage.all().values()
                 if kwargs.get("__class__") == model_name
             ]
 
@@ -90,6 +91,7 @@ class Console(cmd.Cmd):
         Expected
         --------
             (anna) create <model>
+            <id>
 
         Missing Model Name
         ------------------
@@ -250,7 +252,7 @@ class Console(cmd.Cmd):
 
         Expected
         --------
-            (anna) update BaseModel 1234-1234-1234 email "aibnb@mail.com"
+            (anna) update User 1234-1234-1234 email "aibnb@mail.com"
 
         Missing Model Name
         ------------------
@@ -264,27 +266,27 @@ class Console(cmd.Cmd):
 
         Missing Instance ID
         -------------------
-            (anna) update BaseModel
+            (anna) update Amenity
             ** instance id missing **
 
         Non-Existant Instance ID
         ------------------------
-            (anna) update BaseModel 123-456-789
+            (anna) update Place 123-456-789
             ** no instance found **
 
         Missing Attribute Name
         ----------------------
-            (anna) update BaseModel 123-456-789
+            (anna) update Review 123-456-789
             ** attribute name missing **
 
         Immutable Attributes
         --------------------
-            (anna) update BaseModel created_at
+            (anna) update State created_at
             ** immutable attribute **
 
         Non-Existant Attribute Value
         ----------------------------
-            (anna) update BaseModel 123-456-789 first_name
+            (anna) update User 123-456-789 first_name
             ** value missing **
         """
 

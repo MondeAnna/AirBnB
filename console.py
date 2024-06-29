@@ -5,13 +5,18 @@ import cmd
 
 
 from models.base_model import BaseModel
+from models.user import User
 from models import storage
 
 
 class Console(cmd.Cmd):
     """CLI Backend Console"""
 
-    __MODELS = {"BaseModel": BaseModel}
+    __MODELS = {
+        "BaseModel": BaseModel,
+        "User": User,
+    }
+
     prompt = "(anna) "
 
     def do_all(self, model_name):

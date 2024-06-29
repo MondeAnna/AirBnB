@@ -124,12 +124,9 @@ class BaseModel:
                 dt_attr[attr] = value
                 continue
 
-            elif attr.count("id"):
-                self.__id = value
-                continue
-
             self.__dict__[attr] = value
 
+        self.__id = kwargs.get("id")
         self.__created_at = dt_attr.get("created_at")
         self.__updated_at = dt_attr.get("updated_at")
 

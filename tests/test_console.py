@@ -37,6 +37,24 @@ class TestConsole(unittest.TestCase):
         self.assertTrue(console.Console().onecmd("quit"))
 
 
+class TestDefault(TestConsole):
+    """Tests cases for the `default` method"""
+
+    @patch("builtins.print")
+    def test_default_with_valid_model(self, mock_print):
+        """Ensures that repl command is executed when valid"""
+
+        console.Console().default("User.all()")
+        mock_print.assert_called_once_with(self.user.super_id)
+
+    @patch("builtins.print")
+    def test_default_with_unknown_value(self, mock_print):
+        """Ensures that repl command is executed when valid"""
+
+        console.Console().default("Jibberish")
+        mock_print.assert_called_once_with("** unknown syntax: Jibberish **")
+
+
 class TestAll(TestConsole):
     """Tests cases for the `do_all` method"""
 

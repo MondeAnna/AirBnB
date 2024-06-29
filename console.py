@@ -31,6 +31,9 @@ class Console(cmd.Cmd):
             User.0aff3461-4768-4d00-9a2e-0d58ce3e4a58
         """
 
+        if "basemodel" in line.lower():
+            return print(f"** unknown syntax: {line} **")
+
         try:
             exec(line)
         except Exception:
@@ -60,7 +63,10 @@ class Console(cmd.Cmd):
             ** model doesn't exist **
         """
 
-        if model_name and model_name not in ALL_MODELS:
+        is_not_model = model_name and model_name not in ALL_MODELS
+        is_base_model = BaseModel.is_base_model(model_name)
+
+        if is_base_model or is_not_model:
             return print("** model doesn't exist **")
 
         if not model_name:

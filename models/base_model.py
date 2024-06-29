@@ -61,6 +61,10 @@ class BaseModel:
         print(f"{cls.__name__} count: {count}")
 
     @classmethod
+    def is_base_model(cls, arg):
+        return arg.lower() in ["basemodel", cls.__name__.lower()]
+
+    @classmethod
     def is_valid_id(cls, instance_id):
         """Validates instance id as being existant"""
 
@@ -85,7 +89,10 @@ class BaseModel:
             print("** model name missing **")
             return False
 
-        if model_name not in models.ALL_MODELS:
+        is_not_model = model_name not in models.ALL_MODELS
+        is_base_model = BaseModel.is_base_model(model_name)
+
+        if is_base_model or is_not_model:
             print("** model doesn't exist **")
             return False
 

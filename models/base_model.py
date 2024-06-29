@@ -5,12 +5,12 @@ all common attributes and methods for the project's classes
 """
 
 
+from importlib import import_module
 from datetime import datetime
-from datetime import date
 import uuid
 
 
-from models import storage
+models = import_module("models")
 
 
 class BaseModel:
@@ -34,31 +34,13 @@ class BaseModel:
         """
 
         self.__init_kwargs__(kwargs) if kwargs else self.__init_default__()
-        storage.new(self)
-
-    @property
-    def id(self):
-        """
-        Returns the model's version four form of the RFC 4122
-        Standardised UUID (Universally Unique Identifiers)
-        """
-
-        return self.__id
-
-    @property
-    def created_at(self):
-        """
-        Returns a datetime object representing the local time
-        at which the model was first created
-        """
-
-        return self.__created_at
+        models.storage.new(self)
 
     def save(self):
         """Saves present model to storage"""
 
         self.__updated_at = datetime.now()
-        storage.save()
+        models.storage.save()
 
     @property
     def super_id(self):
@@ -68,7 +50,7 @@ class BaseModel:
         Identifiers)
         """
 
-        return f"{self.__class__.__name__}.{self.__id}"
+        return f"{self.__class__.__name__}.{self.id}"
 
     def to_dict(self):
         """
@@ -76,32 +58,22 @@ class BaseModel:
         model
         """
 
-        class_name = self.__class__.__name__
-        prefix = f"_{class_name}__"
-
         dict_ = {
-            key.replace(prefix, ""): (
-                value.isoformat() if isinstance(value, date) else value
-            )
-            for key, value in self.__dict__.items()
+            key: value.isoformat()
+            if isinstance(value, datetime) else value
+            for key, value in sorted(self.__dict__.items())
         }
 
-        return {"__class__": class_name, **dict_}
-
-    @property
-    def updated_at(self):
-        """
-        Returns a datetime object representing the local time
-        at which the model was last updated
-        """
-
-        return self.__updated_at
+        return {
+            "__class__": self.__class__.__name__,
+            **dict_,
+        }
 
     def __init_default__(self):
         """Generates a new BaseModel object"""
 
-        self.__id = str(uuid.uuid4())
-        self.__created_at = self.__updated_at = datetime.now()
+        self.id = str(uuid.uuid4())
+        self.created_at = self.updated_at = datetime.now()
 
     def __init_kwargs__(self, kwargs):
         """
@@ -114,21 +86,15 @@ class BaseModel:
             and spawn existing objects
         """
 
-        dt_attr = {"created_at": None, "updated_at": None}
-        dt_format = "%Y-%m-%dT%H:%M:%S.%f"
+        dt_attr = ["created_at", "updated_at"]
 
         for attr, value in kwargs.items():
 
             if attr in dt_attr:
-                value = datetime.strptime(value, dt_format)
-                dt_attr[attr] = value
-                continue
+                format = "%Y-%m-%dT%H:%M:%S.%f"
+                value = datetime.strptime(value, format)
 
             self.__dict__[attr] = value
-
-        self.__id = kwargs.get("id")
-        self.__created_at = dt_attr.get("created_at")
-        self.__updated_at = dt_attr.get("updated_at")
 
     def __setattr__(self, name, value):
         """
@@ -148,19 +114,16 @@ class BaseModel:
 
         if name.count("updated_at"):
             return super().__setattr__(name, value)
-
-        self.__updated_at = datetime.now()
+        self.__dict__["updated_at"] = datetime.now()
         super().__setattr__(name, value)
 
     def __str__(self):
         """Returns a string representing the current model"""
 
-        class_name = self.__class__.__name__
-        prefix = f"_{class_name}__"
-
         dict_ = {
-            key.replace(prefix, ""): value
+            key: value
             for key, value in sorted(self.__dict__.items())
         }
 
-        return f"[{class_name}] ({self.id}) {dict_}"
+        name = self.__class__.__name__
+        return f"[{name}] ({self.id}) {dict_}"

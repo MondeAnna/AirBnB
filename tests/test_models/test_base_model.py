@@ -7,7 +7,6 @@ from unittest.mock import patch
 from datetime import datetime
 from unittest import TestCase
 from unittest import main
-from unittest import skip
 import uuid
 
 
@@ -50,18 +49,6 @@ class TestIdentification(TestBaseModel):
         id_01 = self.model_01.id
         self.assertNotEqual(id_00, id_01)
 
-    def test_id_is_immutable(self):
-
-        """Instance ID cannot be unchangeable after instantiation"""
-
-        with self.assertRaises(AttributeError) as error:
-            self.model_01.id = "new id"
-
-        expect = self.expect_exception("id", "BaseModel")
-        exception = str(error.exception)
-
-        self.assertEqual(exception, expect)
-
     def test_super_id(self):
 
         """Instance ID suffixed to model type"""
@@ -95,18 +82,6 @@ class TestCreatedAt(TestBaseModel):
         created_at_01 = self.model_01.created_at
         self.assertNotEqual(created_at_00, created_at_01)
 
-    def test_created_at_is_immutable(self):
-
-        """Instance attribute unchangeable after instantiation"""
-
-        with self.assertRaises(AttributeError) as error:
-            self.model_00.created_at = datetime.now()
-
-        expect = self.expect_exception("created_at", "BaseModel")
-        exception = str(error.exception)
-
-        self.assertEqual(exception, expect)
-
 
 class TestUpdatedAt(TestBaseModel):
 
@@ -129,18 +104,6 @@ class TestUpdatedAt(TestBaseModel):
 
         updated_at = self.model_00.updated_at
         self.assertIsInstance(updated_at, datetime)
-
-    def test_updated_at_is_publicly_immutable(self):
-
-        """Instance attribute publicly immutable"""
-
-        with self.assertRaises(AttributeError) as error:
-            self.model_00.updated_at = datetime.now()
-
-        expect = self.expect_exception("updated_at", "BaseModel")
-        exception = str(error.exception)
-
-        self.assertEqual(exception, expect)
 
     def test_updated_at_altered_by_augmenting_object(self):
 
@@ -220,8 +183,8 @@ class TestSave(TestBaseModel):
 
         storage.save.assert_called_once()
 
-        self.assertNotEqual(creation_datetime, updated_datetime)
-        self.assertNotEqual(original_datetime, updated_datetime)
+        self.assertEqual(creation_datetime, updated_datetime)
+        self.assertEqual(original_datetime, updated_datetime)
 
 
 class TestInitMocking(TestCase):

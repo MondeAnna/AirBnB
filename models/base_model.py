@@ -43,16 +43,13 @@ class BaseModel:
         Where instances are scoped to calling class.
         """
 
-        all_models = [
+        all_super_ids = [
             model for model in models.storage.all().keys()
             if model.count(cls.__name__)
         ]
 
-        if not all_models:
-            print(f"** no {cls.__name__} in storage **")
-
-        for model in all_models:
-            print(model)
+        for super_id in all_super_ids:
+            print(super_id)
 
     @classmethod
     def count(cls):

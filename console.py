@@ -10,7 +10,7 @@ from models import storage
 class Console(cmd.Cmd):
     """CLI Backend Console"""
 
-    __MODELS = ["BaseModel"]
+    __MODELS = {"BaseModel": BaseModel}
     prompt = "(anna) "
 
     def do_all(self, model_name):
@@ -49,7 +49,8 @@ class Console(cmd.Cmd):
             ]
 
         for kwargs in list_of_kwargs:
-            print(BaseModel(**kwargs).super_id)
+            model = self.__MODELS.get(kwargs.get("__class__"))
+            print(model(**kwargs).super_id)
 
     def do_create(self, model_name):
         """
@@ -81,7 +82,8 @@ class Console(cmd.Cmd):
         if not self.__is_valid_model__(model_name):
             return
 
-        model = BaseModel()
+        Model = self.__MODELS.get(model_name)
+        model = Model()
         model.save()
         print(model.id)
 

@@ -18,6 +18,9 @@ class TestConsole(unittest.TestCase):
 
         self.model = BaseModel()
         storage.save = MagicMock()
+        storage.all = MagicMock(
+            return_value={self.model.super_id: self.model}
+        )
 
     def test_quit(self):
         """Ensures that the user can exit the console"""
@@ -59,6 +62,59 @@ class TestCreate(TestConsole):
 
         console.Console().do_create("invalid")
         mock_print.assert_called_once_with("** model doesn't exist **")
+
+
+class TestShow(TestConsole):
+    """Tests cases for the `do_show` method"""
+
+    @patch("builtins.print")
+    def test_show_with_valid_input(self, mock_print):
+        """Ensures that existing model can be shown"""
+
+        console.Console().do_show(f"BaseModel {self.model.id}")
+        mock_print.assert_called_once_with(self.model)
+
+        """a secondary call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 2)
+
+    @patch("builtins.print")
+    def test_show_without_providing_input(self, mock_print):
+        """
+        Ensures that user is informed of need for both a
+        model and an id
+
+        In order to emulate cmd.Cmd actively taking `no input`,
+        an empty string has to be provided in the test case
+        """
+
+        console.Console().do_show("")
+        mock_print.assert_called_once_with("** model name missing **")
+        storage.all.assert_not_called()
+
+    @patch("builtins.print")
+    def test_show_using_invalid_model(self, mock_print):
+        """Ensures that user is informed in model is invalid"""
+
+        console.Console().do_show("Ice-Cream-Chicken-Popcorn-Coffee")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+        storage.all.assert_not_called()
+
+    @patch("builtins.print")
+    def test_show_without_providing_an_id(self, mock_print):
+        """Ensures that user is informed of the need of in id"""
+
+        console.Console().do_show("BaseModel")
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_show_with_when_match_is_found(self, mock_print):
+        """Ensures that user is informed if no match is found"""
+
+        console.Console().do_show("BaseModel 1234-1234-1234-1234")
+        mock_print.assert_called_once_with("** no instance found **")
 
 
 if __name__ == "__main__":

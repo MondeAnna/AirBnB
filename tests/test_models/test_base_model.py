@@ -2,12 +2,9 @@
 """Collective testing of attributes related to base model"""
 
 
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 from datetime import datetime
-from unittest import TestCase
-from unittest import main
-from unittest import skip
+import unittest
 import uuid
 
 
@@ -17,7 +14,7 @@ from importlib import import_module
 models = import_module("models")
 
 
-class TestBaseModel(TestCase):
+class TestBaseModel(unittest.TestCase):
 
     """Collective testing of attributes related to base model"""
 
@@ -94,6 +91,65 @@ class TestAll(TestBaseModel):
         self.assertEqual(last_printout, expected)
         self.assertEqual(mock_print.call_count, 2)
         self.assertEqual(models.storage.all.call_count, 1)
+
+
+class TestCount(unittest.TestCase):
+    """Collective and specified testing of the `count` method"""
+
+    def setUp(self):
+        self.model = models.BaseModel()
+
+    @patch("builtins.print")
+    def test_count_prints_none_when_storage_empty(self, mock_print):
+        """Ensure printout is zero storage is empty"""
+
+        models.storage.all = MagicMock(return_value={})
+        self.model.count()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("BaseModel count: 0")
+
+    @patch("builtins.print")
+    def test_count_prints_none_when_instances_not_in_storage(self, mock_print):
+        """Ensure user no printout if storage is has no instances"""
+
+        models.storage.all = MagicMock(
+            return_value={
+                "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
+                    "__class__": "City",
+                    "created_at": "2024-06-24T20:16:48.425363",
+                    "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
+                    "name": "",
+                    "state_id": "",
+                    "updated_at": "2024-06-24T20:16:48.425363",
+                },
+                "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
+                    "__class__": "Amenity",
+                    "created_at": "2024-06-24T20:26:23.358548",
+                    "id": "c38faac4-94c7-4705-93d7-50677d21f922",
+                    "name": "",
+                    "updated_at": "2024-06-24T20:26:23.358548",
+                },
+            }
+        )
+
+        self.model.count()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("BaseModel count: 0")
+
+    @patch("builtins.print")
+    def test_count_when_instances_in_storage(self, mock_print):
+        """Ensure user is informed when model present"""
+
+        models.storage.all = MagicMock(
+            return_value={self.model.super_id: self.model.to_dict()}
+        )
+
+        self.model.count()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("BaseModel count: 1")
 
 
 class TestIdentification(TestBaseModel):
@@ -253,7 +309,7 @@ class TestSave(TestBaseModel):
         self.assertNotEqual(original_updated_datetime, updated_datetime)
 
 
-class TestInitMocking(TestCase):
+class TestInitMocking(unittest.TestCase):
 
     """Setup objects used across multiple mocked tests"""
 
@@ -334,4 +390,4 @@ class TestDunderStr(TestInitMocking):
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()

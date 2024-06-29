@@ -29,6 +29,45 @@ class TestConsole(unittest.TestCase):
         self.assertTrue(console.Console().onecmd("quit"))
 
 
+class TestAll(TestConsole):
+
+    """Tests cases for the `do_all` method"""
+
+    @patch("builtins.print")
+    def test_all_when_no_models_present(self, mock_print):
+        """Ensures that no model is show if none present"""
+
+        storage.all = MagicMock(return_value={})
+        console.Console().do_all("")
+        mock_print.assert_not_called()
+
+    @patch("builtins.print")
+    def test_when_only_all_is_inputted(self, mock_print):
+        """
+        Ensures that all models are shown
+
+        In order to emulate cmd.Cmd actively taking `no input`,
+        an empty string has to be provided in the test case
+        """
+
+        console.Console().do_all("")
+        mock_print.assert_called_once_with([str(self.model)])
+
+    @patch("builtins.print")
+    def test_all_valid_model_provided(self, mock_print):
+        """Ensures that valid model shows available models"""
+
+        console.Console().do_all("BaseModel")
+        mock_print.assert_called_once_with([str(self.model)])
+
+    @patch("builtins.print")
+    def test_all_with_invalid_model(self, mock_print):
+        """Ensures that user is informed if invalid model is provided"""
+
+        console.Console().do_all("invalid")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+
 class TestCreate(TestConsole):
     """Tests cases for the `do_create` method"""
 

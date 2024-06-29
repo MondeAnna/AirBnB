@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 """CLI Backend Console"""
 from collections import OrderedDict
+from importlib import import_module
 import cmd
 
 
+models = import_module("models")
 from models.base_model import BaseModel
 from models.user import User
 from models import storage
@@ -13,8 +15,8 @@ class Console(cmd.Cmd):
     """CLI Backend Console"""
 
     __MODELS = {
-        "BaseModel": BaseModel,
-        "User": User,
+        "BaseModel": models.BaseModel,
+        "User": models.User,
     }
 
     prompt = "(anna) "
@@ -47,10 +49,10 @@ class Console(cmd.Cmd):
             return print("** model doesn't exist **")
 
         if not model_name:
-            list_of_kwargs = list(storage.all().values())
+            list_of_kwargs = list(models.storage.all().values())
         else:
             list_of_kwargs = [
-                kwargs for kwargs in storage.all().values()
+                kwargs for kwargs in models.storage.all().values()
                 if kwargs.get("__class__") == model_name
             ]
 
@@ -137,8 +139,8 @@ class Console(cmd.Cmd):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        storage.all().pop(key)
-        storage.save()
+        models.storage.all().pop(key)
+        models.storage.save()
 
     def do_EOF(self, line):
         """Exits the programme when user enters `ctrl+d`"""
@@ -208,8 +210,10 @@ class Console(cmd.Cmd):
             return
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        kwargs = storage.all().get(key)
-        print(BaseModel(**kwargs))
+        kwargs = models.storage.all().get(key)
+
+        Model = self.__MODELS.get(parsed["model_name"])
+        print(Model(**kwargs))
 
     def do_update(self, line):
         """
@@ -276,7 +280,7 @@ class Console(cmd.Cmd):
             return print("** value missing **")
 
         key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        kwargs = storage.all().get(key)
+        kwargs = models.storage.all().get(key)
 
         if parsed.get("attribute"):
             attr = parsed.get("attribute")
@@ -294,7 +298,7 @@ class Console(cmd.Cmd):
     def __is_valid_id__(self, instance_id):
         """Validates instance id as being existant"""
 
-        keys = storage.all().keys()
+        keys = models.storage.all().keys()
         elements = [element for key in keys for element in key.split(".")]
 
         if not instance_id:

@@ -6,10 +6,13 @@ attributes and methods for the User class
 """
 
 
-from models.base_model import BaseModel
+from importlib import import_module
 
 
-class User(BaseModel):
+models = import_module("models")
+
+
+class User(models.BaseModel):
 
     """
     The definition, documentation and encapsulation of all common

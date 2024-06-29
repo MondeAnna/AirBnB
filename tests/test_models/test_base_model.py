@@ -10,8 +10,10 @@ from unittest import main
 import uuid
 
 
-from models.base_model import BaseModel
-from models import storage
+from importlib import import_module
+
+
+models = import_module("models")
 
 
 class TestBaseModel(TestCase):
@@ -21,9 +23,9 @@ class TestBaseModel(TestCase):
     def setUp(self):
         """Test instance factory"""
 
-        self.model_00 = BaseModel()
-        self.model_01 = BaseModel()
-        storage.save = MagicMock()
+        self.model_00 = models.BaseModel()
+        self.model_01 = models.BaseModel()
+        models.storage.save = MagicMock()
 
     @staticmethod
     def expect_exception(attribute, model):
@@ -123,7 +125,7 @@ class TestUpdatedAt(TestBaseModel):
 
         """Instance spawned with kwargs does not alter `updated_at`"""
 
-        model = BaseModel(**self.kwargs)
+        model = models.BaseModel(**self.kwargs)
 
         expect_created_at = datetime(2017, 9, 28, 21, 3, 54, 52298)
         expect_updated_at = datetime(2017, 9, 30, 13, 33, 33, 52302)
@@ -140,7 +142,7 @@ class TestUpdatedAt(TestBaseModel):
         """Use kwargs spawned by other instance for accuracy"""
 
         dict_ = self.model_00.to_dict()
-        new_model = BaseModel(**dict_)
+        new_model = models.BaseModel(**dict_)
 
         self.assertEqual(self.model_00.id, new_model.id)
         self.assertEqual(self.model_00.created_at, new_model.created_at)
@@ -159,7 +161,7 @@ class TestInitKwargs(TestBaseModel):
 
         dt_format = "%Y-%m-%dT%H:%M:%S.%f"
 
-        new_model = BaseModel(**self.model_01.to_dict())
+        new_model = models.BaseModel(**self.model_01.to_dict())
 
         self.assertEqual(self.model_01.id, new_model.id)
         self.assertEqual(self.model_01.created_at, new_model.created_at)
@@ -181,7 +183,7 @@ class TestSave(TestBaseModel):
 
         updated_datetime = self.model_00.updated_at
 
-        storage.save.assert_called_once()
+        models.storage.save.assert_called_once()
 
         self.assertEqual(creation_datetime, updated_datetime)
         self.assertEqual(original_datetime, updated_datetime)
@@ -200,7 +202,7 @@ class TestInitMocking(TestCase):
         mock_dt.now.return_value = self.init_time
         self.init_time_str = self.init_time.isoformat()
 
-        self.model = BaseModel()
+        self.model = models.BaseModel()
 
 
 class TestToDict(TestInitMocking):

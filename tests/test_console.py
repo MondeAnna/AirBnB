@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 """Tests for the products console"""
 from unittest.mock import MagicMock, patch
-from datetime import timedelta
-from datetime import datetime
+from datetime import datetime, timedelta
 import unittest
 import uuid
 
@@ -19,6 +18,7 @@ class TestConsole(unittest.TestCase):
         """Test instance factory"""
 
         self.model = BaseModel()
+        storage.new = MagicMock()
         storage.save = MagicMock()
         storage.all = MagicMock(
             return_value={self.model.super_id: self.model.to_dict()}
@@ -105,7 +105,6 @@ class TestCreate(TestConsole):
 
 
 class TestDestroy(TestConsole):
-
     """Tests cases for the `do_destroy` method"""
 
     def test_destroy_with_valid_input(self):
@@ -182,14 +181,27 @@ class TestShow(TestConsole):
         console.Console().do_show(f"BaseModel {self.model.id}")
         call_arg = mock_print.call_args[0][0]
 
-        call_created = datetime.strptime(call_arg.to_dict().get("created_at"), dt_format)
-        model_created = datetime.strptime(self.model.to_dict().get("created_at"), dt_format)
+        call_created = datetime.strptime(
+            call_arg.to_dict().get("created_at"), dt_format
+        )
 
-        call_updated = datetime.strptime(call_arg.to_dict().get("updated_at"), dt_format)
-        model_updated = datetime.strptime(self.model.to_dict().get("updated_at"), dt_format)
+        model_created = datetime.strptime(
+            self.model.to_dict().get("created_at"), dt_format
+        )
 
-        self.assertTrue(abs(call_created - model_created) < timedelta(seconds=1))
-        self.assertTrue(abs(call_updated - model_updated) < timedelta(seconds=1))
+        call_updated = datetime.strptime(
+            call_arg.to_dict().get("updated_at"), dt_format
+        )
+        model_updated = datetime.strptime(
+            self.model.to_dict().get("updated_at"), dt_format
+        )
+
+        created_diff = abs(call_created - model_created)
+        updated_diff = abs(call_updated - model_updated)
+
+        self.assertTrue(created_diff < timedelta(seconds=1))
+        self.assertTrue(updated_diff < timedelta(seconds=1))
+
         self.assertEqual(type(call_arg), type(self.model))
 
         """a secondary call is made when parsing id"""
@@ -234,6 +246,85 @@ class TestShow(TestConsole):
 
         console.Console().do_show("BaseModel 1234-1234-1234-1234")
         mock_print.assert_called_once_with("** no instance found **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 1)
+
+
+class TestUpdate(TestConsole):
+    """Tests cases for the `do_update` method"""
+
+    def test_update_when_all_parameters_present(self):
+        """
+        Ensure that update operates as expected
+
+        NOTE: Unable to prove that the model in memory has been updated
+        """
+
+        cmd = f"BaseModel {self.model.id} name BestNameEver"
+        console.Console().do_update(cmd)
+
+        storage.new.assert_called_once()
+        storage.save.assert_called_once()
+
+    @patch("builtins.print")
+    def test_update_without_providing_input(self, mock_print):
+        """
+        Ensures that user is informed of need for both a
+        model and an id
+
+        In order to emulate cmd.Cmd actively taking `no input`,
+        an empty string has to be provided in the test case
+        """
+
+        console.Console().do_update("")
+        mock_print.assert_called_once_with("** model name missing **")
+        storage.all.assert_not_called()
+
+    @patch("builtins.print")
+    def test_update_using_invalid_model(self, mock_print):
+        """Ensures that user is informed in model is invalid"""
+
+        console.Console().do_update("Ice-Cream-Chicken-Popcorn-Coffee")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+        storage.all.assert_not_called()
+
+    @patch("builtins.print")
+    def test_update_without_providing_an_id(self, mock_print):
+        """Ensures that user is informed of the need of in id"""
+
+        console.Console().do_update("BaseModel")
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_match_is_found(self, mock_print):
+        """Ensures that user is informed if no match is found"""
+
+        console.Console().do_update("BaseModel 1234-1234-1234-1234")
+        mock_print.assert_called_once_with("** no instance found **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_attribute_name_is_missing(self, mock_print):
+        """Ensures that user is informed if no attribute provided"""
+
+        console.Console().do_update(f"BaseModel {self.model.id}")
+        mock_print.assert_called_once_with("** attribute name missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_value_missing(self, mock_print):
+        """Ensures that user is informed if no value provided"""
+
+        console.Console().do_update(f"BaseModel {self.model.id} name")
+        mock_print.assert_called_once_with("** value missing **")
 
         """a call is made when parsing id"""
         self.assertEqual(storage.all.call_count, 1)

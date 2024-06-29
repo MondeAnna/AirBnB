@@ -4,6 +4,7 @@ import cmd
 
 
 from models.base_model import BaseModel
+from models import storage
 
 
 class Console(cmd.Cmd):
@@ -57,10 +58,90 @@ class Console(cmd.Cmd):
 
         return True
 
+    def do_show(self, line):
+        """
+        Prints the string representation of an instance
+        based on the model name and id. The user is informed
+        should:
+            - The model's name be missing or invalid
+            - The model not exist
+            - The id be missing or invalid
+            - The id refer to a non-existing instance
+
+        Parameter
+        ---------
+        line : str
+            user input expected to be two part expression
+            containing
+
+            model_name : str
+                name of model to create
+
+            instance_id : str
+                id of instance
+
+        Expected
+        --------
+            (anna) show <model> <id>
+            <model-details>
+
+        Missing Model Name
+        ------------------
+            (anna) show
+            ** model name missing **
+
+        Non-Existant Model
+        ------------------
+            (anna) show DoesNotExist
+            ** model doesn't exist **
+
+        Missing Instance ID
+        -------------------
+            (anna) show <model>
+            ** instance id missing **
+
+        Non-Existant Instance ID
+        ------------------------
+            (anna) show <model> <id>
+            ** no instance found **
+        """
+
+        if line.count(" "):
+            model_name, instance_id, *_ = line.split()
+        else:
+            model_name = line
+            instance_id = ""
+
+        if not self.__is_valid_model__(model_name):
+            return
+
+        if not self.__is_valid_id__(instance_id):
+            return
+
+        key = f"{model_name}.{instance_id}"
+        model = storage.all().get(key)
+        print(model)
+
     def emptyline(self):
         """Skips to new prompt should input be empty"""
 
         pass
+
+    def __is_valid_id__(self, instance_id):
+        """Validates instance id as being existant"""
+
+        keys = storage.all().keys()
+        elements = [element for key in keys for element in key.split(".")]
+
+        if not instance_id:
+            print("** instance id missing **")
+            return False
+
+        if instance_id not in elements:
+            print("** no instance found **")
+            return False
+
+        return True
 
     def __is_valid_model__(self, model_name):
         """Validates model name as being existant"""

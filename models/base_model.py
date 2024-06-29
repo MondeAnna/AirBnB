@@ -54,6 +54,17 @@ class BaseModel:
         for model in all_models:
             print(model)
 
+    @classmethod
+    def count(cls):
+        """Display number of all class specific instances in storage"""
+
+        count = sum(
+            model.get("__class__") == cls.__name__
+            for model in models.storage.all().values()
+        )
+
+        print(f"{cls.__name__} count: {count}")
+
     def save(self):
         """Saves present model to storage"""
 

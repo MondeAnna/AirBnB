@@ -2,16 +2,134 @@
 """Test suite for inheritor of BaseModel"""
 
 
+from unittest.mock import MagicMock, patch
 from importlib import import_module
-from unittest import TestCase
-from unittest import main
+import unittest
 
 
 models = import_module("models")
 
 
-class TestUser(TestCase):
+class TestUser(unittest.TestCase):
 
+    def setUp(self):
+        self.amenity = models.Amenity()
+        self.user = models.User()
+
+    @patch("builtins.print")
+    def test_all_not_called_when_storage_empty(self, mock_print):
+        """Ensure user no printout if storage is empty"""
+
+        models.storage.all = MagicMock(return_value={})
+        self.user.all()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_not_called()
+
+    @patch("builtins.print")
+    def test_all_not_called_when_instances_not_in_storage(self, mock_print):
+        """Ensure user no printout if storage is has no instances"""
+
+        models.storage.all = MagicMock(
+            return_value={
+                "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
+                    "__class__": "City",
+                    "created_at": "2024-06-24T20:16:48.425363",
+                    "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
+                    "name": "",
+                    "state_id": "",
+                    "updated_at": "2024-06-24T20:16:48.425363",
+                },
+                "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
+                    "__class__": "Amenity",
+                    "created_at": "2024-06-24T20:26:23.358548",
+                    "id": "c38faac4-94c7-4705-93d7-50677d21f922",
+                    "name": "",
+                    "updated_at": "2024-06-24T20:26:23.358548",
+                },
+            }
+        )
+
+        self.user.all()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_not_called()
+
+    @patch("builtins.print")
+    def test_all_when_instances_in_storage(self, mock_print):
+        """Ensure user is informed when model present"""
+
+        models.storage.all = MagicMock(
+            return_value={self.amenity.super_id: self.amenity.to_dict()}
+        )
+
+        self.amenity.all()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with(self.amenity.super_id)
+
+
+class TestCount(unittest.TestCase):
+    """Collective and specified testing of the `count` method"""
+
+    def setUp(self):
+        self.city = models.City()
+        self.user = models.User()
+
+    @patch("builtins.print")
+    def test_count_prints_none_when_storage_empty(self, mock_print):
+        """Ensure printout is zero storage is empty"""
+
+        models.storage.all = MagicMock(return_value={})
+        self.user.count()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("User count: 0")
+
+    @patch("builtins.print")
+    def test_count_prints_none_when_instances_not_in_storage(self, mock_print):
+        """Ensure user no printout if storage is has no instances"""
+
+        models.storage.all = MagicMock(
+            return_value={
+                "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
+                    "__class__": "City",
+                    "created_at": "2024-06-24T20:16:48.425363",
+                    "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
+                    "name": "",
+                    "state_id": "",
+                    "updated_at": "2024-06-24T20:16:48.425363",
+                },
+                "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
+                    "__class__": "Amenity",
+                    "created_at": "2024-06-24T20:26:23.358548",
+                    "id": "c38faac4-94c7-4705-93d7-50677d21f922",
+                    "name": "",
+                    "updated_at": "2024-06-24T20:26:23.358548",
+                },
+            }
+        )
+
+        self.user.count()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("User count: 0")
+
+    @patch("builtins.print")
+    def test_count_when_instances_in_storage(self, mock_print):
+        """Ensure user is informed when model present"""
+
+        models.storage.all = MagicMock(
+            return_value={self.city.super_id: self.city.to_dict()}
+        )
+
+        self.city.count()
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("City count: 1")
+
+
+class TestUser(unittest.TestCase):
     """Collective testing of base model attributes"""
 
     def setUp(self):
@@ -50,7 +168,7 @@ class TestUser(TestCase):
         self.assertEqual(user.to_dict(), kwargs)
 
 
-class TestAmenity(TestCase):
+class TestAmenity(unittest.TestCase):
 
     """Collective testing of base model attributes"""
 
@@ -82,7 +200,7 @@ class TestAmenity(TestCase):
         self.assertEqual(amenity.to_dict(), kwargs)
 
 
-class TestCity(TestCase):
+class TestCity(unittest.TestCase):
 
     """Collective testing of base model attributes"""
 
@@ -116,7 +234,7 @@ class TestCity(TestCase):
         self.assertEqual(city.to_dict(), kwargs)
 
 
-class TestPlace(TestCase):
+class TestPlace(unittest.TestCase):
 
     """Collective testing of base model attributes"""
 
@@ -174,7 +292,7 @@ class TestPlace(TestCase):
         self.assertEqual(place.to_dict(), kwargs)
 
 
-class TestReview(TestCase):
+class TestReview(unittest.TestCase):
 
     """Collective testing of base model attributes"""
 
@@ -210,7 +328,7 @@ class TestReview(TestCase):
         self.assertEqual(review.to_dict(), kwargs)
 
 
-class TestState(TestCase):
+class TestState(unittest.TestCase):
 
     """Collective testing of base model attributes"""
 
@@ -243,4 +361,4 @@ class TestState(TestCase):
 
 
 if __name__ == "__main__":
-    main()
+    unittest.main()

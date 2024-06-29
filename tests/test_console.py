@@ -20,10 +20,14 @@ class TestConsole(unittest.TestCase):
         """Test instance factory"""
 
         self.model = models.BaseModel()
+
+        self.user = models.User()
+        self.user.save = MagicMock()
+
         models.storage.new = MagicMock()
         models.storage.save = MagicMock()
         models.storage.all = MagicMock(
-            return_value={self.model.super_id: self.model.to_dict()}
+            return_value={self.user.super_id: self.user.to_dict()}
         )
 
     def test_quit(self):
@@ -60,7 +64,7 @@ class TestAll(TestConsole):
     def test_all_valid_model_provided(self, mock_print):
         """Ensures that valid model shows available models"""
 
-        console.Console().do_all("BaseModel")
+        console.Console().do_all("User")
         mock_print.assert_called_once()
 
     @patch("builtins.print")
@@ -78,7 +82,7 @@ class TestCreate(TestConsole):
     def test_create_with_valid_model(self, mock_print):
         """Ensures that a new model can be created"""
 
-        console.Console().do_create("BaseModel")
+        console.Console().do_create("User")
 
         model_id = mock_print.call_args[0][0]
         new_uuid = uuid.UUID(model_id, version=4)
@@ -112,7 +116,7 @@ class TestDestroy(TestConsole):
     def test_destroy_with_valid_input(self):
         """Ensures that existing model can be destroyed"""
 
-        console.Console().do_destroy(f"BaseModel {self.model.id}")
+        console.Console().do_destroy(f"User {self.user.id}")
 
         """a secondary call is made when parsing id"""
         self.assertEqual(models.storage.all.call_count, 2)
@@ -148,7 +152,7 @@ class TestDestroy(TestConsole):
     def test_destroy_without_providing_an_id(self, mock_print):
         """Ensures that user is informed of the need of in id"""
 
-        console.Console().do_destroy("BaseModel")
+        console.Console().do_destroy("User")
         mock_print.assert_called_once_with("** instance id missing **")
 
         """a call is made when parsing id"""
@@ -159,7 +163,7 @@ class TestDestroy(TestConsole):
     def test_destroy_when_no_match_is_found(self, mock_print):
         """Ensures that user is informed if no match is found"""
 
-        console.Console().do_destroy("BaseModel 1234-1234-1234-1234")
+        console.Console().do_destroy("User 1234-1234-1234-1234")
         mock_print.assert_called_once_with("** no instance found **")
 
         """a call is made when parsing id"""
@@ -175,23 +179,23 @@ class TestShow(TestConsole):
         """
         Ensures that existing model can be shown
 
-        ID not tested as BaseModel looks to create a different id
+        ID not tested as User looks to create a different id
         even when kwargs are provided during init
         """
 
-        console.Console().do_show(f"BaseModel {self.model.id}")
+        console.Console().do_show(f"User {self.user.id}")
         call_arg = mock_print.call_args[0][0]
 
         call_created = call_arg.to_dict().get("created_at")
-        model_created = self.model.to_dict().get("created_at")
+        model_created = self.user.to_dict().get("created_at")
 
         call_updated = call_arg.to_dict().get("updated_at")
-        model_updated = self.model.to_dict().get("updated_at")
+        model_updated = self.user.to_dict().get("updated_at")
 
         self.assertEqual(call_created, model_created)
         self.assertEqual(call_updated, model_updated)
 
-        self.assertEqual(type(call_arg), type(self.model))
+        self.assertEqual(type(call_arg), type(self.user))
 
         """a secondary call is made when parsing id"""
         self.assertEqual(models.storage.all.call_count, 2)
@@ -223,7 +227,7 @@ class TestShow(TestConsole):
     def test_show_without_providing_an_id(self, mock_print):
         """Ensures that user is informed of the need of in id"""
 
-        console.Console().do_show("BaseModel")
+        console.Console().do_show("User")
         mock_print.assert_called_once_with("** instance id missing **")
 
         """a call is made when parsing id"""
@@ -233,7 +237,7 @@ class TestShow(TestConsole):
     def test_show_with_when_match_is_found(self, mock_print):
         """Ensures that user is informed if no match is found"""
 
-        console.Console().do_show("BaseModel 1234-1234-1234-1234")
+        console.Console().do_show("User 1234-1234-1234-1234")
         mock_print.assert_called_once_with("** no instance found **")
 
         """a call is made when parsing id"""
@@ -250,11 +254,18 @@ class TestUpdate(TestConsole):
         NOTE: Unable to prove that the model in memory has been updated
         """
 
-        cmd = f"BaseModel {self.model.id} name BestNameEver"
+        cmd = f"User {self.user.id} name BestNameEver"
         console.Console().do_update(cmd)
 
-        models.storage.new.assert_called_once()
-        models.storage.save.assert_called_once()
+        self.user.save.assert_called_once()
+
+    def test_update_email(self):
+        """Ensure that updating email does not cause an error"""
+
+        cmd = f"User {self.user.id} email user@email.com"
+        console.Console().do_update(cmd)
+
+        self.user.save.assert_called_once()
 
     @patch("builtins.print")
     def test_update_without_providing_input(self, mock_print):
@@ -282,7 +293,7 @@ class TestUpdate(TestConsole):
     def test_update_without_providing_an_id(self, mock_print):
         """Ensures that user is informed of the need of in id"""
 
-        console.Console().do_update("BaseModel")
+        console.Console().do_update("User")
         mock_print.assert_called_once_with("** instance id missing **")
 
         """a call is made when parsing id"""
@@ -292,7 +303,7 @@ class TestUpdate(TestConsole):
     def test_update_with_when_match_is_found(self, mock_print):
         """Ensures that user is informed if no match is found"""
 
-        console.Console().do_update("BaseModel 1234-1234-1234-1234")
+        console.Console().do_update("User 1234-1234-1234-1234")
         mock_print.assert_called_once_with("** no instance found **")
 
         """a call is made when parsing id"""
@@ -302,17 +313,33 @@ class TestUpdate(TestConsole):
     def test_update_with_when_attribute_name_is_missing(self, mock_print):
         """Ensures that user is informed if no attribute provided"""
 
-        console.Console().do_update(f"BaseModel {self.model.id}")
+        console.Console().do_update(f"User {self.user.id}")
         mock_print.assert_called_once_with("** attribute name missing **")
 
         """a call is made when parsing id"""
         self.assertEqual(models.storage.all.call_count, 1)
 
     @patch("builtins.print")
+    def test_update_with_when_immutable_attribut_given(self, mock_print):
+        """Ensures that user is informed if immutable attribute provided"""
+
+        console.Console().do_update(f"User {self.user.id} id")
+        mock_print.assert_called_with("** immutable attribute **")
+
+        console.Console().do_update(f"User {self.user.id} created_at")
+        mock_print.assert_called_with("** immutable attribute **")
+
+        console.Console().do_update(f"User {self.user.id} updated_at")
+        mock_print.assert_called_with("** immutable attribute **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 3)
+
+    @patch("builtins.print")
     def test_update_with_when_value_missing(self, mock_print):
         """Ensures that user is informed if no value provided"""
 
-        console.Console().do_update(f"BaseModel {self.model.id} name")
+        console.Console().do_update(f"User {self.user.id} name")
         mock_print.assert_called_once_with("** value missing **")
 
         """a call is made when parsing id"""

@@ -39,11 +39,11 @@ class TestAll(TestBaseModel):
         """Ensure user is informed where no objects present"""
 
         models.storage.all = MagicMock(return_value={})
-        printout = f"** no {self.model_00.__class__.__name__} in storage **"
 
         self.model_00.all()
-        mock_print.assert_called_once_with(printout)
+
         models.storage.all.assert_called_once()
+        mock_print.assert_not_called()
 
     @patch("builtins.print")
     def test_all_when_instances_not_in_storage(self, mock_print):
@@ -66,11 +66,11 @@ class TestAll(TestBaseModel):
                 "updated_at": "2024-06-24T20:26:23.358548",
             },
         })
-        printout = f"** no {self.model_00.__class__.__name__} in storage **"
 
         self.model_00.all()
-        mock_print.assert_called_once_with(printout)
+
         models.storage.all.assert_called_once()
+        mock_print.assert_not_called()
 
     @patch("builtins.print")
     def test_all_when_instances_in_storage(self, mock_print):

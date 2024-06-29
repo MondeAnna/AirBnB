@@ -68,6 +68,50 @@ class BaseModel:
         self.updated_at = datetime.now()
         models.storage.save()
 
+    @classmethod
+    def show(cls, instance_id=None):
+        """
+        Prints the string representation of an instance
+        based on the model name and id. If the model name
+        or id are missing, the user is informed.
+
+        Parameter
+        ---------
+        instance_id: str
+            id of instance
+
+        Expected
+        --------
+            (anna) <model>.show(<id>)
+
+
+        Missing Instance ID
+        -------------------
+            (anna) <model>.show()
+            ** no instance found **
+            (anna) <model>.show('')
+            ** no instance found **
+
+        Non-Existant Instance ID
+        ------------------------
+            (anna) <model>.show('123-456-789')
+            ** no instance found **
+        """
+
+        if not instance_id:
+            return print("** instance id missing **")
+
+        key = f"{cls.__name__}.{instance_id}"
+        kwargs = models.storage.all().get(key)
+
+        if not kwargs:
+            return print("** no instance found **")
+
+        Model = models.ALL_MODELS.get(cls.__name__)
+        model = Model(**kwargs)
+
+        print(model)
+
     @property
     def super_id(self):
         """
@@ -94,6 +138,11 @@ class BaseModel:
             "__class__": self.__class__.__name__,
             **dict_,
         }
+
+    def __eq__(self, other):
+        have_same_ids = self.super_id == other.super_id
+        have_same_created_at = self.created_at == other.created_at
+        return have_same_ids and have_same_created_at
 
     def __init_default__(self):
         """Generates a new BaseModel object"""
@@ -146,10 +195,6 @@ class BaseModel:
     def __str__(self):
         """Returns a string representing the current model"""
 
-        dict_ = {
-            key: value
-            for key, value in sorted(self.__dict__.items())
-        }
-
+        dict_ = {key: value for key, value in sorted(self.__dict__.items())}
         name = self.__class__.__name__
         return f"[{name}] ({self.id}) {dict_}"

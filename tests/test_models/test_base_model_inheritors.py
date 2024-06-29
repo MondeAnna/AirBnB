@@ -129,6 +129,73 @@ class TestCount(unittest.TestCase):
         mock_print.assert_called_once_with("City count: 1")
 
 
+class TestShow(unittest.TestCase):
+    """Collective and specified testing of the `show` method"""
+
+    def setUp(self):
+        self.review = models.Review()
+        self.state = models.State()
+
+    @patch("builtins.print")
+    def test_show_informs_not_found_when_storage_empty(self, mock_print):
+        """Ensure user informed no instance is found if storage empty"""
+
+        models.storage.all = MagicMock(return_value={})
+        self.state.show("jibberish identification")
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("** no instance found **")
+
+    @patch("builtins.print")
+    def test_show_informs_not_found_when_instance_not_in_storage(
+        self, mock_print
+    ):
+        """Ensure user informed no instance is found if not in storage"""
+
+        models.storage.all = MagicMock(
+            return_value={
+                "City.c9eb42a8-bbf1-466e-9720-c3bd3bec417b": {
+                    "__class__": "City",
+                    "created_at": "2024-06-24T20:16:48.425363",
+                    "id": "c9eb42a8-bbf1-466e-9720-c3bd3bec417b",
+                    "name": "",
+                    "state_id": "",
+                    "updated_at": "2024-06-24T20:16:48.425363",
+                },
+                "Amenity.c38faac4-94c7-4705-93d7-50677d21f922": {
+                    "__class__": "Amenity",
+                    "created_at": "2024-06-24T20:26:23.358548",
+                    "id": "c38faac4-94c7-4705-93d7-50677d21f922",
+                    "name": "",
+                    "updated_at": "2024-06-24T20:26:23.358548",
+                },
+            }
+        )
+
+        """the uuid goes with the storage's City kwargs"""
+        self.state.show("c9eb42a8-bbf1-466e-9720-c3bd3bec417b")
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once_with("** no instance found **")
+
+    @patch("builtins.print")
+    def test_show_when_instances_in_storage(self, mock_print):
+        """Ensure user is informed when model present"""
+
+        models.storage.all = MagicMock(
+            return_value={self.review.super_id: self.review.to_dict()}
+        )
+
+        self.review.show(self.review.id)
+
+        print_call_arg = mock_print.call_args[0][0]
+
+        self.assertEqual(print_call_arg, self.review)
+
+        models.storage.all.assert_called_once()
+        mock_print.assert_called_once()
+
+
 class TestUser(unittest.TestCase):
     """Collective testing of base model attributes"""
 

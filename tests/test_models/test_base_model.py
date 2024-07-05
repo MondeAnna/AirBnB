@@ -280,6 +280,282 @@ class TestCreatedAt(TestModels):
         self.assertNotEqual(created_at_00, created_at_01)
 
 
+class TestInitKwargs(TestModels):
+    """Collective testing of instantiation with kwargs"""
+
+    @patch("builtins.print")
+    def test_show_with_valid_input(self, mock_print):
+        """
+        Ensures that when init is used with args, uuid and other
+        key values are kept unchanged
+        """
+
+        dt_format = "%Y-%m-%dT%H:%M:%S.%f"
+
+        new_model = models.BaseModel(**self.model_01.to_dict())
+
+        self.assertEqual(self.model_01.id, new_model.id)
+        self.assertEqual(self.model_01.created_at, new_model.created_at)
+        self.assertEqual(self.model_01.updated_at, new_model.updated_at)
+
+
+class TestSave(TestModels):
+    """Collective testing of `save` method"""
+
+    def test_calling_save_alters_updated_at_attr(self):
+        """Instance `update_at` alterd when method called"""
+
+        creation_datetime = self.model_00.created_at
+        original_updated_datetime = self.model_00.updated_at
+
+        self.model_00.save()
+
+        updated_datetime = self.model_00.updated_at
+
+        models.storage.save.assert_called_once()
+
+        self.assertNotEqual(creation_datetime, updated_datetime)
+        self.assertNotEqual(original_updated_datetime, updated_datetime)
+
+
+class TestShow(unittest.TestCase):
+    """Collective and specified testing of the `show` method"""
+
+    @patch("builtins.print")
+    def test_show_when_instance_id_not_provided(self, mock_print):
+        """Ensure user informed of missing instance id"""
+
+        models.storage.all = MagicMock()
+
+        models.BaseModel.show()
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        models.BaseModel.show("")
+        self.assertEqual(mock_print.call_count, 2)
+        self.assertEqual(models.storage.all.call_count, 2)
+
+
+class TestInitMocking(unittest.TestCase):
+    """Setup objects used across multiple mocked tests"""
+
+    @patch("models.base_model.uuid", wraps=uuid)
+    @patch("models.base_model.datetime", wraps=datetime)
+    def setUp(self, mock_dt, mock_uuid):
+        mock_uuid.uuid4.return_value = "unique id"
+
+        self.init_time = datetime.now()
+        mock_dt.now.return_value = self.init_time
+        self.init_time_str = self.init_time.isoformat()
+
+        self.model = models.BaseModel()
+
+
+class TestDunderStr(TestInitMocking):
+    """Collective testing of `__str__` property"""
+
+    def test_str_property(self):
+        """Instance str representation standardised layout"""
+
+        dict_ = {
+            "created_at": self.init_time,
+            "id": "unique id",
+            "updated_at": self.init_time,
+        }
+
+        expect = f"[BaseModel] (unique id) {dict_}"
+        actual = str(self.model)
+
+        self.assertEqual(actual, expect)
+
+
+class TestToDict(TestInitMocking):
+    """Collective testing of `to_dict` method"""
+
+    def test_to_dict_attr_value_pair_provision(self):
+        """Evaluate instance attributes-value pairing"""
+
+        expect = {
+            "__class__": "BaseModel",
+            "created_at": self.init_time_str,
+            "id": "unique id",
+            "updated_at": self.init_time_str,
+        }
+
+        self.assertEqual(self.model.to_dict(), expect)
+
+    def test_to_dict_after_adding_new_attribute(self):
+        """
+        Evaluate instance attributes-value pairing when the
+        addition of a new attribute is made
+        """
+
+        self.model.new_attr = "new attribute"
+
+        expect = {
+            "__class__": "BaseModel",
+            "created_at": self.init_time_str,
+            "id": "unique id",
+            "new_attr": "new attribute",
+            "updated_at": self.init_time_str,
+        }
+
+        dict_ = self.model.to_dict()
+
+        self.assertNotEqual(dict_.get("updated_at"), expect.get("updated_at"))
+        self.assertEqual(dict_.get("created_at"), expect.get("created_at"))
+
+        self.assertEqual(dict_.get("__class__"), expect.get("__class__"))
+        self.assertEqual(dict_.get("new_attr"), expect.get("new_attr"))
+        self.assertEqual(dict_.get("id"), expect.get("id"))
+
+
+class TestUpdate(TestModels):
+    """Tests cases for the `update` method"""
+
+    @patch("builtins.print")
+    def test_update_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `update`"""
+
+        models.BaseModel.update()
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+    def test_update_when_all_parameters_present(self):
+        """
+        Ensure that update operates as expected
+
+        NOTE: Unable to prove that the model in memory has been updated
+        """
+
+        city = models.City()
+
+        models.City.save = MagicMock()
+        models.storage.all = MagicMock(
+            return_value={city.super_id: city.to_dict()}
+        )
+
+        updated_city = models.City.update(
+            instance_id=city.id,
+            attribute="name",
+            value="Best City Ever",
+        )
+
+        self.assertEqual(updated_city.name, "Best City Ever")
+        models.City.save.assert_called_once()
+
+    def test_update_email(self):
+        """Ensure that updating email does not cause an error"""
+
+        user = models.User()
+
+        models.User.save = MagicMock()
+        models.storage.all = MagicMock(
+            return_value={user.super_id: user.to_dict()}
+        )
+
+        updated_user = models.User.update(
+            instance_id=user.id,
+            attribute="email",
+            value="new.user@email.com",
+        )
+
+        self.assertEqual(updated_user.email, "new.user@email.com")
+        models.User.save.assert_called_once()
+
+    @patch("builtins.print")
+    def test_update_without_providing_an_id(self, mock_print):
+        """Ensures that user is informed of the need of in id"""
+
+        models.storage.all = MagicMock(return_value={})
+
+        models.Place.update(instance_id="")
+
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_attribute_name_is_missing(self, mock_print):
+        """Ensures that user is informed if no attribute provided"""
+
+        review = models.Review()
+        models.storage.all = MagicMock(
+            return_value={review.super_id: review.to_dict()}
+        )
+
+        models.Review.update(instance_id=review.id, attribute="")
+
+        mock_print.assert_called_once_with("** attribute missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_value_missing(self, mock_print):
+        """Ensures that user is informed if no value provided"""
+
+        city = models.City()
+
+        models.storage.all = MagicMock(
+            return_value={city.super_id: city.to_dict()}
+        )
+
+        models.City.update(instance_id=city.id, attribute="name")
+
+        mock_print.assert_called_once_with("** value missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_match_is_found(self, mock_print):
+        """Ensures that user is informed if no match is found"""
+
+        models.storage.all = MagicMock(return_value={})
+
+        models.State.update(
+            instance_id="Jibberish",
+            attribute="name",
+            value="Eastern Cape",
+        )
+        mock_print.assert_called_once_with("** no instance found **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 1)
+
+    @patch("builtins.print")
+    def test_update_with_when_immutable_attribut_given(self, mock_print):
+        """Ensures that user is informed if immutable attribute provided"""
+
+        models.storage.all = MagicMock()
+
+        city = models.City()
+
+        models.City.update(
+            instance_id=city.id,
+            attribute="id",
+        )
+
+        mock_print.assert_called_with("** immutable attribute **")
+
+        models.City.update(
+            instance_id=city.id,
+            attribute="created_at",
+        )
+
+        mock_print.assert_called_with("** immutable attribute **")
+
+        models.City.update(
+            instance_id=city.id,
+            attribute="updated_at",
+        )
+
+        mock_print.assert_called_with("** immutable attribute **")
+
+        self.assertEqual(mock_print.call_count, 3)
+        models.storage.all.assert_not_called()
+
+
 class TestUpdatedAt(TestModels):
     """
     Collective and specified testing of the `updated_at`

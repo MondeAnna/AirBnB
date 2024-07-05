@@ -3,6 +3,8 @@
 
 # except: files
 !.gitignore
+!*.css
+!*.html
 !*.md
 !*.png
 !*.py
@@ -15,3 +17,6 @@
 !tests
 !tests/test_models
 !tests/test_models/test_engine
+!web_static
+!web_static/images
+!web_static/styles

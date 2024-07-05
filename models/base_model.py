@@ -57,7 +57,7 @@ class BaseModel:
         is not recognised as a valid model
         """
 
-        if cls.__name__.lower() == "basemodel":
+        if BaseModel.is_base_model(cls.__name__):
             return print("** model doesn't exist **")
 
         model = cls()
@@ -74,6 +74,27 @@ class BaseModel:
         )
 
         print(f"{cls.__name__} count: {count}")
+
+    @classmethod
+    def destroy(cls, instance_id=None):
+        """
+        Deletes an instance of the model matching the
+        given id. The user is informed should:
+            - The model's name be missing or invalid
+            - The model not exist
+            - The id be missing or invalid
+            - The id refer to a non-existing instance
+        """
+
+        if BaseModel.is_base_model(cls.__name__):
+            return print("** model doesn't exist **")
+
+        if not BaseModel.is_valid_id(instance_id):
+            return
+
+        key = f"{cls.__name__}.{instance_id}"
+        models.storage.all().pop(key)
+        models.storage.save()
 
     @classmethod
     def is_base_model(cls, arg):

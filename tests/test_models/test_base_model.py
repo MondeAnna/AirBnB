@@ -10,7 +10,7 @@ import uuid
 models = import_module("models")
 
 
-class TestModel(unittest.TestCase):
+class TestModels(unittest.TestCase):
     """Collective testing of attributes related to base model"""
 
     def setUp(self):
@@ -25,7 +25,7 @@ class TestModel(unittest.TestCase):
         return f"property '{attribute}' of '{model}' object has no setter"
 
 
-class TestAll(TestModel):
+class TestAll(TestModels):
     """Collective and specified testing of the `all` method"""
 
     @patch("builtins.print")
@@ -92,7 +92,7 @@ class TestAll(TestModel):
         self.assertEqual(models.storage.all.call_count, 1)
 
 
-class TestCreate(TestModel):
+class TestCreate(TestModels):
     """Tests cases for the `create` method"""
 
     @patch("builtins.print")
@@ -175,7 +175,66 @@ class TestCount(unittest.TestCase):
         mock_print.assert_called_once_with("BaseModel count: 1")
 
 
-class TestIdentification(TestModel):
+class TestDestroy(TestModels):
+    """Tests cases for the `do_destroy` method"""
+
+    @patch("builtins.print")
+    def test_destroy_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `destroy`"""
+
+        models.BaseModel.destroy("")
+        mock_print.assert_called_with("** model doesn't exist **")
+
+        models.BaseModel.destroy("")
+        mock_print.assert_called_with("** model doesn't exist **")
+
+        self.assertEqual(mock_print.call_count, 2)
+
+    def test_destroy_with_valid_instance_id(self):
+        """Ensures that existing model can be destroyed"""
+
+        user = models.User()
+        models.storage.all = MagicMock(
+            return_value={user.super_id: user.to_dict()}
+        )
+
+        models.User.destroy(user.id)
+
+        """a secondary call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 2)
+        models.storage.save.assert_called_once()
+
+    @patch("builtins.print")
+    def test_destroy_without_argument(self, mock_print):
+        """Ensures that user is informed of the need of in id"""
+
+        models.storage.all = MagicMock(return_value={})
+
+        models.City.destroy()
+        mock_print.assert_called_once_with("** instance id missing **")
+
+        models.City.destroy("")
+        mock_print.assert_called_with("** instance id missing **")
+
+        """a call is made when parsing id"""
+        self.assertEqual(models.storage.all.call_count, 2)
+        models.storage.save.assert_not_called()
+
+    @patch("builtins.print")
+    def test_destroy_when_no_match_is_found(self, mock_print):
+        """Ensures that user is informed if no match is found"""
+
+        models.storage.all = MagicMock(return_value={})
+
+        models.Place.destroy("1234-1234-1234-1234")
+        mock_print.assert_called_once_with("** no instance found **")
+
+        """a call is made when parsing id"""
+        models.storage.all.assert_called_once()
+        models.storage.save.assert_not_called()
+
+
+class TestIdentification(TestModels):
     """Collective and specified testing of the `id` model attribute"""
 
     def test_id_is_str(self):
@@ -201,7 +260,7 @@ class TestIdentification(TestModel):
         self.assertIsInstance(super_id, str)
 
 
-class TestCreatedAt(TestModel):
+class TestCreatedAt(TestModels):
     """
     Collective and specified testing of the `created_at`
     model attribute
@@ -221,7 +280,7 @@ class TestCreatedAt(TestModel):
         self.assertNotEqual(created_at_00, created_at_01)
 
 
-class TestUpdatedAt(TestModel):
+class TestUpdatedAt(TestModels):
     """
     Collective and specified testing of the `updated_at`
     model attribute
@@ -280,7 +339,7 @@ class TestUpdatedAt(TestModel):
         self.assertEqual(self.model_00.updated_at, new_model.updated_at)
 
 
-class TestInitKwargs(TestModel):
+class TestInitKwargs(TestModels):
     """Collective testing of instantiation with kwargs"""
 
     @patch("builtins.print")
@@ -299,7 +358,7 @@ class TestInitKwargs(TestModel):
         self.assertEqual(self.model_01.updated_at, new_model.updated_at)
 
 
-class TestSave(TestModel):
+class TestSave(TestModels):
     """Collective testing of `save` method"""
 
     def test_calling_save_alters_updated_at_attr(self):

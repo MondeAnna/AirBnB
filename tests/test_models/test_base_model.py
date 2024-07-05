@@ -10,7 +10,7 @@ import uuid
 models = import_module("models")
 
 
-class TestBaseModel(unittest.TestCase):
+class TestModel(unittest.TestCase):
     """Collective testing of attributes related to base model"""
 
     def setUp(self):
@@ -25,7 +25,7 @@ class TestBaseModel(unittest.TestCase):
         return f"property '{attribute}' of '{model}' object has no setter"
 
 
-class TestAll(TestBaseModel):
+class TestAll(TestModel):
     """Collective and specified testing of the `all` method"""
 
     @patch("builtins.print")
@@ -92,6 +92,30 @@ class TestAll(TestBaseModel):
         self.assertEqual(models.storage.all.call_count, 1)
 
 
+class TestCreate(TestModel):
+    """Tests cases for the `create` method"""
+
+    @patch("builtins.print")
+    def test_create_using_base_model(self, mock_print):
+        """Ensure that BaseModel is inaccessible via calling `create`"""
+
+        models.BaseModel.create()
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+    @patch("builtins.print")
+    def test_create_with_valid_model(self, mock_print):
+        """Ensures that a new model can be created"""
+
+        models.User.create()
+
+        model_id = mock_print.call_args[0][0]
+        new_uuid = uuid.UUID(model_id, version=4)
+
+        self.assertTrue(isinstance(new_uuid, uuid.UUID))
+        mock_print.assert_called_once()
+        models.storage.save.assert_called_once()
+
+
 class TestCount(unittest.TestCase):
     """Collective and specified testing of the `count` method"""
 
@@ -151,7 +175,7 @@ class TestCount(unittest.TestCase):
         mock_print.assert_called_once_with("BaseModel count: 1")
 
 
-class TestIdentification(TestBaseModel):
+class TestIdentification(TestModel):
     """Collective and specified testing of the `id` model attribute"""
 
     def test_id_is_str(self):
@@ -177,7 +201,7 @@ class TestIdentification(TestBaseModel):
         self.assertIsInstance(super_id, str)
 
 
-class TestCreatedAt(TestBaseModel):
+class TestCreatedAt(TestModel):
     """
     Collective and specified testing of the `created_at`
     model attribute
@@ -197,7 +221,7 @@ class TestCreatedAt(TestBaseModel):
         self.assertNotEqual(created_at_00, created_at_01)
 
 
-class TestUpdatedAt(TestBaseModel):
+class TestUpdatedAt(TestModel):
     """
     Collective and specified testing of the `updated_at`
     model attribute
@@ -256,7 +280,7 @@ class TestUpdatedAt(TestBaseModel):
         self.assertEqual(self.model_00.updated_at, new_model.updated_at)
 
 
-class TestInitKwargs(TestBaseModel):
+class TestInitKwargs(TestModel):
     """Collective testing of instantiation with kwargs"""
 
     @patch("builtins.print")
@@ -275,7 +299,7 @@ class TestInitKwargs(TestBaseModel):
         self.assertEqual(self.model_01.updated_at, new_model.updated_at)
 
 
-class TestSave(TestBaseModel):
+class TestSave(TestModel):
     """Collective testing of `save` method"""
 
     def test_calling_save_alters_updated_at_attr(self):

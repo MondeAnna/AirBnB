@@ -174,7 +174,7 @@ class TestShow(unittest.TestCase):
         """the uuid goes with the storage's City kwargs"""
         self.state.show("c9eb42a8-bbf1-466e-9720-c3bd3bec417b")
 
-        models.storage.all.assert_called_once()
+        self.assertEqual(models.storage.all.call_count, 2)
         mock_print.assert_called_once_with("** no instance found **")
 
     @patch("builtins.print")
@@ -191,7 +191,7 @@ class TestShow(unittest.TestCase):
 
         self.assertEqual(print_call_arg, self.review)
 
-        models.storage.all.assert_called_once()
+        self.assertEqual(models.storage.all.call_count, 2)
         mock_print.assert_called_once()
 
 

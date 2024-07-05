@@ -682,8 +682,7 @@ class TestShow(unittest.TestCase):
 
         models.BaseModel.show("")
         self.assertEqual(mock_print.call_count, 2)
-
-        models.storage.all.assert_not_called()
+        self.assertEqual(models.storage.all.call_count, 2)
 
 
 class TestToDict(TestInitMocking):

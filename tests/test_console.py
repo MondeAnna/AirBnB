@@ -186,16 +186,6 @@ class TestDestroy(TestConsole):
         models.storage.save.assert_not_called()
 
     @patch("builtins.print")
-    def test_destroy_using_invalid_model(self, mock_print):
-        """Ensures that user is informed in model is invalid"""
-
-        console.Console().do_destroy("Ice-Cream-Chicken-Popcorn-Coffee")
-        mock_print.assert_called_once_with("** model doesn't exist **")
-
-        models.storage.all.assert_not_called()
-        models.storage.save.assert_not_called()
-
-    @patch("builtins.print")
     def test_destroy_without_providing_an_id(self, mock_print):
         """Ensures that user is informed of the need of in id"""
 
@@ -204,6 +194,16 @@ class TestDestroy(TestConsole):
 
         """a call is made when parsing id"""
         models.storage.all.assert_called_once()
+        models.storage.save.assert_not_called()
+
+    @patch("builtins.print")
+    def test_destroy_using_invalid_model(self, mock_print):
+        """Ensures that user is informed in model is invalid"""
+
+        console.Console().do_destroy("Ice-Cream-Chicken-Popcorn-Coffee")
+        mock_print.assert_called_once_with("** model doesn't exist **")
+
+        models.storage.all.assert_not_called()
         models.storage.save.assert_not_called()
 
     @patch("builtins.print")
@@ -367,7 +367,7 @@ class TestUpdate(TestConsole):
         """Ensures that user is informed if no attribute provided"""
 
         console.Console().do_update(f"User {self.user.id}")
-        mock_print.assert_called_once_with("** attribute name missing **")
+        mock_print.assert_called_once_with("** attribute missing **")
 
         """a call is made when parsing id"""
         self.assertEqual(models.storage.all.call_count, 1)
@@ -385,8 +385,7 @@ class TestUpdate(TestConsole):
         console.Console().do_update(f"User {self.user.id} updated_at")
         mock_print.assert_called_with("** immutable attribute **")
 
-        """a call is made when parsing id"""
-        self.assertEqual(models.storage.all.call_count, 3)
+        models.storage.all.assert_not_called()
 
     @patch("builtins.print")
     def test_update_with_when_value_missing(self, mock_print):

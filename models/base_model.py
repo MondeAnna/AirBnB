@@ -172,8 +172,8 @@ class BaseModel:
             ** no instance found **
         """
 
-        if not instance_id:
-            return print("** instance id missing **")
+        if not BaseModel.is_valid_id(instance_id):
+            return
 
         key = f"{cls.__name__}.{instance_id}"
         kwargs = models.storage.all().get(key)

@@ -6,6 +6,7 @@ import shlex
 import cmd
 
 
+"""blanket import allows for Console.default to work"""
 from models import *
 
 
@@ -70,11 +71,11 @@ class Console(cmd.Cmd):
             return print("** model doesn't exist **")
 
         if not model_name:
-            for cls in ALL_MODELS.values():
-                cls.all()
+            for Model in ALL_MODELS.values():
+                Model.all()
         else:
-            cls = ALL_MODELS.get(model_name)
-            cls.all()
+            Model = ALL_MODELS.get(model_name)
+            Model.all()
 
     def do_create(self, model_name):
         """
@@ -104,13 +105,8 @@ class Console(cmd.Cmd):
             ** model doesn't exist **
         """
 
-        if not BaseModel.is_valid_model(model_name):
-            return
-
-        Model = ALL_MODELS.get(model_name)
-        model = Model()
-        model.save()
-        print(model.id)
+        if BaseModel.is_valid_model(model_name):
+            ALL_MODELS.get(model_name).create()
 
     def do_destroy(self, line):
         """
@@ -149,15 +145,9 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not BaseModel.is_valid_model(parsed.get("model_name")):
-            return
-
-        if not BaseModel.is_valid_id(parsed.get("instance_id")):
-            return
-
-        key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        storage.all().pop(key)
-        storage.save()
+        if BaseModel.is_valid_model(parsed.get("model_name")):
+            Model = ALL_MODELS.get(parsed.get("model_name"))
+            Model.destroy(parsed.get("instance_id"))
 
     def do_EOF(self, line):
         """Exits the programme when user enters `ctrl+d`"""
@@ -223,9 +213,6 @@ class Console(cmd.Cmd):
         if not BaseModel.is_valid_model(parsed.get("model_name")):
             return
 
-        if not BaseModel.is_valid_id(parsed.get("instance_id")):
-            return
-
         Model = ALL_MODELS.get(parsed.get("model_name"))
         Model.show(parsed.get("instance_id"))
 
@@ -289,31 +276,12 @@ class Console(cmd.Cmd):
 
         parsed = self.__parse_line__(line)
 
-        if not BaseModel.is_valid_model(parsed.get("model_name")):
-            return
-
-        if not BaseModel.is_valid_id(parsed.get("instance_id")):
-            return
-
-        if not parsed.get("attribute"):
-            return print("** attribute name missing **")
-
-        immutables = ["id", "created_at", "updated_at"]
-        if parsed.get("attribute") in immutables:
-            return print("** immutable attribute **")
-
-        if not parsed.get("value"):
-            return print("** value missing **")
-
-        key = f"{parsed.get('model_name')}.{parsed.get('instance_id')}"
-        kwargs = storage.all().get(key)
-
-        if parsed.get("attribute"):
-            attr = parsed.get("attribute")
-            kwargs[attr] = parsed.get("value")
-
-        Model = ALL_MODELS.get(parsed.get("model_name"))
-        Model(**kwargs).save()
+        if BaseModel.is_valid_model(parsed.get("model_name")):
+            ALL_MODELS.get(parsed.get("model_name")).update(
+                instance_id=parsed.get("instance_id"),
+                attribute=parsed.get("attribute"),
+                value=parsed.get("value"),
+            )
 
     def emptyline(self):
         """Skips to new prompt should input be empty"""

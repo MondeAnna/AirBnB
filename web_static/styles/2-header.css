@@ -1,0 +1,8 @@
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: #AE5175;
+    height: 70px;
+    width: 100%;
+}
